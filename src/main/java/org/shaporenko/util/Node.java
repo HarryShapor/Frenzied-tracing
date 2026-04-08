@@ -1,4 +1,4 @@
-package org.shaporenko.dao;
+package org.shaporenko.util;
 
 public class Node<T> {
     T data;

@@ -1,4 +1,4 @@
-package org.shaporenko.dao;
+package org.shaporenko.util;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
