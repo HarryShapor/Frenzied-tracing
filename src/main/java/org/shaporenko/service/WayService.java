@@ -7,12 +7,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.shaporenko.service.DFS.*;
-
+import static org.shaporenko.service.AllPathsFinder.*;
 public class WayService {
 
     private Board board;
-    private DFS dfs;
+    private AllPathsFinder dfs;
     private Set<List<Integer>> routes = new HashSet<>();
 //    private List<Integer> path = new ArrayList<>();
 //    private Set<int[]> edges = new HashSet<>();
@@ -33,27 +32,11 @@ public class WayService {
         this.routes = routes;
     }
 
-//    public List<Integer> getPath() {
-//        return path;
-//    }
-//
-//    public void setPath(List<Integer> path) {
-//        this.path = path;
-//    }
-//
-//    public Set<int[]> getEdges() {
-//        return edges;
-//    }
-//
-//    public void setEdges(Set<int[]> edges) {
-//        this.edges = edges;
-//    }
-
     public WayService(Board board) {
         this.board = board;
 //        this.path = path;
 //        this.edges = edges;
-        dfs = new DFS(this.board, this.routes);
+        dfs = new AllPathsFinder(this.board);
     }
 
     public long allWays(int[] segment, List<LinkedList<Integer>> segLists){
@@ -94,7 +77,7 @@ public class WayService {
             for (int j=i; j<this.board.getN(); j++){
                 if (i != j) {
 //                    System.out.println("i - " + i + ", j - " + j);
-                    this.routes = dfs.dfs(i, j);
+                    this.routes = dfs.findAllSimplePathsBetweenSourceAndTarget(i, j);
                 }
             }
         }

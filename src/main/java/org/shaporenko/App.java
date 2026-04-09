@@ -11,7 +11,7 @@ public class App
 
     private final static int height = 4;
     private final static int weight = 4;
-    private final static int gridPitch = 1;
+    private final static double gridPitch = 2;
     private final static int layers = 1;
     private final static boolean diagonals = false;
 
@@ -25,7 +25,7 @@ public class App
         WayService wayService = new WayService(board);
         wayService.allWays();
 
-        List<LinkedList<Integer>> boardList = board.adjacencyListsReturn(height, weight, gridPitch, layers, diagonals);
+        List<LinkedList<Integer>> boardList = board.getNeighboringContacts();
         int n = (height * weight);
         int n2 = n * (n-1);
         System.out.println("n - " + n);

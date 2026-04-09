@@ -5,12 +5,9 @@ import org.shaporenko.util.LinkedList;
 
 import java.util.*;
 
-public class DFS {
+public class AllPathsFinder {
 
     private Board board;
-    private Set<List<Integer>> routes;
-    private List<Integer> path = new ArrayList<>();
-    private Set<int[]> edges = new HashSet<>();
 
     public void setBoard(Board board) {
         this.board = board;
@@ -20,23 +17,27 @@ public class DFS {
         return board;
     }
 
-    public DFS(Board board, Set<List<Integer>> routes) {
+    public AllPathsFinder(Board board) {
         this.board = board;
-        this.routes = routes;
     }
 
     private void dfsRecurs(int src, int dst){
+
+        Set<List<Integer>> paths = new HashSet<>();
+        List<Integer> currentPath = new ArrayList<>();
+        Set<int[]> edges = new HashSet<>();
+
         int p = src;
         Set<Integer> edge = new HashSet<>();
         while (true) {
-            this.path.add(p);
+            currentPath.add(p);
             if (p == dst) {
-                if (routes.contains(new ArrayList<>(path))){
+                if (paths.contains(new ArrayList<>(currentPath))){
                     break;
                 }
-                this.routes.add(new ArrayList<>(this.path));
-                this.path.remove(this.path.size() - 1);
-                path.clear();
+                paths.add(new ArrayList<>(currentPath));
+                currentPath.remove(currentPath.size() - 1);
+                currentPath.clear();
                 p = src;
             }
 
@@ -55,102 +56,84 @@ public class DFS {
                     }
                 }
             }
-            this.edges.remove(edge);
-            this.path.remove(this.path.size() - 1);
+            edges.remove(edge);
+            currentPath.remove(currentPath.size() - 1);
         }
-        System.out.println(routes.size());
+        System.out.println(paths.size());
     }
 
-    public Set<List<Integer>> dfs(int src, int dst){
+    private int chooseTheDirectionOfThePath(int current, List<Integer> currentPath, Set<int[]> edges){
+        boolean flag;
 
-        int p = src;
-        this.path.clear();
-        this.edges.clear();
-//        System.out.println("path - "+ path);
-        this.path.add(p);
-        while (true) {
-            int size = this.path.size();
-            for (Integer i : this.board.getNeighboringContacts().get(p)) {
-//                System.out.println(this.boardList.get(p));
-                boolean flag = false;
-                for (int[] g : this.edges) {
-                    if (Arrays.equals(g, new int[]{p, i}) || Arrays.equals(g, new int[]{i, p})) {
-                        flag = true;
-                    }
-                }
-                if (flag) {
-                    continue;
-                }
-                if (!flag && !this.path.contains(i)) {
-//                    int d = path.size()-1;
-                    this.path.add(i);
-                    this.edges.add(new int[]{p, i});
-                    p = i;
-                    break;
+        for (Integer currnetNeighboring : this.board.getNeighboringContacts().get(current)) {
+            flag = false;
+            //цикл по парам рёбер
+            for (int[] edge : edges) {
+                //если ребро с текущим контактом и его соседом есть, то идём дальше
+                if (Arrays.equals(edge, new int[]{current, currnetNeighboring})
+                        || Arrays.equals(edge, new int[]{currnetNeighboring, current})) {
+                    flag = true;
                 }
             }
-            if (p != dst && size == path.size()) {
-//              Возврат к вершине ветвления и удаление рёбер после неё
-//                System.out.println(path);
-                if (size == 1) {
-//                    System.out.println(this.routes);
-                    break;
-                }
-                int d = this.path.get(this.path.size() - 1);
-                this.path.remove(this.path.size() - 1);
-                try {
-                    this.edges.removeIf(i -> i[0] == d);
-                    /*for (int[] edge : edges) {
-                        if (edge[0] == d) {
-                            edges.remove(edge);
-                        }
-                    }*/
-/*                    System.out.print("edges - ");
-                    for (int[] edge : edges) {
-                        System.out.print(Arrays.toString(edge) + " ");
-                    }
-                    System.out.println();*/
-                } catch (ConcurrentModificationException e) {
-//                   break;
-                }
-                p = this.path.get(this.path.size() - 1);
-
-//                break;
+            if (flag) {
+                continue;
             }
-            if (p == dst) {
-//                if (!routes.contains(path)){
-//                    routes.add(path);
-//                    path.remove(path.size()-1);
-//                    p = path.get(path.size()-1);
-//                }
-//                else {
-//                    path.remove(path.size()-1);
-//                    p = path.get(path.size()-1);
-//                }
-                int d = this.path.get(this.path.size() - 1);
-                List<Integer> pathLocale = new ArrayList<>(this.path);
-//                System.out.println(pathLocale);
-//                System.out.println(pathLocale.hashCode());
-                this.routes.add(pathLocale);
-//                System.out.println(this.routes);
-//                System.out.println(path);
-                this.edges.removeIf(i -> i[0] == d);
-
-//                for (int[] edge : edges){
-//                    if (edge[0] == d){
-//                        edges.remove(edge);
-//                    }
-//                }
-                /*System.out.print("edges - ");
-                for (int[] edge : edges) {
-                    System.out.print(Arrays.toString(edge) + " ");
-                }
-                System.out.println();*/
-                this.path.remove(this.path.size() - 1);
-                p = this.path.get(this.path.size() - 1);
+            //если flag == false и в текущем питу нет текущего контакта
+            if (!flag && !currentPath.contains(currnetNeighboring)) {
+                current = currnetNeighboring;
+                break;
             }
         }
-        return this.routes;
+        return current;
+    }
+
+    public Set<List<Integer>> findAllSimplePathsBetweenSourceAndTarget(int source, int target){
+
+        //инициализация структур данных
+        Set<List<Integer>> paths = new HashSet<>();
+        List<Integer> currentPath = new ArrayList<>();
+        Set<int[]> edges = new HashSet<>();
+
+
+        int current = source;
+        int size;
+
+        //Добавление в текущий путь начальную точку
+        currentPath.add(current);
+        while (true) {
+            size = currentPath.size();
+
+            int currentNew = chooseTheDirectionOfThePath(current, currentPath, edges);
+            if (current != currentNew) {
+                currentPath.add(currentNew); //добавляем текущий контакт
+                edges.add(new int[]{current, currentNew}); //добавляем ребро с ним
+                current = currentNew;
+            }
+
+            if (current != target && size == currentPath.size()) {
+//              Возврат к вершине ветвления и удаление рёбер после неё
+                if (size == 1) {
+                    break;
+                }
+                int d = currentPath.get(currentPath.size() - 1);
+                currentPath.remove(currentPath.size() - 1);
+                try {
+                    edges.removeIf(i -> i[0] == d);
+                } catch (ConcurrentModificationException e) {
+                }
+                current = currentPath.get(currentPath.size() - 1);
+            }
+
+            if (current == target) {
+                int d = currentPath.get(currentPath.size() - 1);
+                List<Integer> pathLocale = new ArrayList<>(currentPath);
+                paths.add(pathLocale);
+                edges.removeIf(i -> i[0] == d);
+                currentPath.remove(currentPath.size() - 1);
+                current = currentPath.get(currentPath.size() - 1);
+            }
+        }
+        return paths;
     }
 
     public static Set<List<Integer>> dfs2(int src, int dst, List<LinkedList<Integer>> boardList){
@@ -198,7 +181,7 @@ public class DFS {
                 int d1 = path.get(path.size() - 1);
                 List<Integer> pathLocale = new ArrayList<>(path);
                 routes.add(pathLocale);
-//                System.out.println(routes.size());
+//                System.out.println(paths.size());
                 edges.removeIf(i -> i[0] == d1);
 
                 path.remove(path.size() - 1);
@@ -216,21 +199,21 @@ public class DFS {
         // Инициализация начального состояния
         stack.push(new Pair<>(src, 0));
         neighborIndices.put(src, 0);
-        this.path.add(src);
+        this.currentPath.add(src);
 
         while (!stack.isEmpty()) {
-//            System.out.println(routes);
+//            System.out.println(paths);
             Pair<Integer, Integer> currentState = stack.peek();
             int currentNode = currentState.getKey();
             int neighborIndex = currentState.getValue();
 
             // Если достигли целевой вершины
             if (currentNode == dst) {
-                this.routes.add(new ArrayList<>(this.path));
+                this.paths.add(new ArrayList<>(this.currentPath));
                 // Откат назад
                 stack.pop();
                 neighborIndices.remove(currentNode);
-                this.path.remove(this.path.size() - 1);
+                this.currentPath.remove(this.currentPath.size() - 1);
                 continue;
             }
 
@@ -253,7 +236,7 @@ public class DFS {
                 if (!this.edges.contains(edge)) {
                     // Добавляем ребро и переходим к соседу
                     this.edges.add(edge);
-                    this.path.add(nextNeighbor);
+                    this.currentPath.add(nextNeighbor);
                     stack.push(new Pair<>(nextNeighbor, 0));
                     neighborIndices.put(nextNeighbor, 0);
                 }
@@ -262,14 +245,14 @@ public class DFS {
                 stack.pop();
                 neighborIndices.remove(currentNode);
 
-                // Удаляем последнее ребро из path
-                if (!this.path.isEmpty()) {
-                    this.path.remove(this.path.size() - 1);
+                // Удаляем последнее ребро из currentPath
+                if (!this.currentPath.isEmpty()) {
+                    this.currentPath.remove(this.currentPath.size() - 1);
                 }
 
                 // Удаляем ребра, связанные с текущим узлом
-                if (!this.path.isEmpty()) {
-                    int prevNode = this.path.get(this.path.size() - 1);
+                if (!this.currentPath.isEmpty()) {
+                    int prevNode = this.currentPath.get(this.currentPath.size() - 1);
                     Set<Integer> edge = new HashSet<>();
                     edge.add(prevNode);
                     edge.add(currentNode);

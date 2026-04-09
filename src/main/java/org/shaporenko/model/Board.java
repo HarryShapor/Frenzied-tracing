@@ -11,7 +11,7 @@ public class Board {
     * */
     //рассматривается удаление данного поля, так как оно бесполезно
     private List<List<Integer>> board = null; //матрица смежности
-    private static List<LinkedList<Integer>> neighboringContacts; //списки смежности
+    private List<LinkedList<Integer>> neighboringContacts; //списки смежности
     private int n; //количество контактных площадок
 
     private int countVerticalPoints;
@@ -49,7 +49,7 @@ public class Board {
     }
 
     private void setN(){
-        this.n = (int) (this.height * this.weight * this.gridPitch * this.layers);
+        this.n = (int) (this.height * this.weight / Math.pow(this.gridPitch, 2) * this.layers);
     }
 
     public List<LinkedList<Integer>> getNeighboringContacts() {
@@ -202,13 +202,13 @@ public class Board {
      * параметр diagonals, который при значении true учитывает диагональные контакты,
      * как соседние
      * */
-    private void buildNeighborhoodGraph(){
+    private List<LinkedList<Integer>> buildNeighborhoodGraph(){
 
         //создание печатной платы
         List<List<Integer>>  printedCircuitBoard = initializationOfContactPlatformNumbers();
 
         //вывод номеров контактов
-//        System.out.println(this.showContactPlatform(printedCircuitBoard));
+        System.out.println(this.showContactPlatform(printedCircuitBoard));
 
         //создание координат контактных площадок
         Map<Integer, int[]> contacts = this.setTheCoordinatesOfContactPads(printedCircuitBoard);
@@ -219,6 +219,7 @@ public class Board {
         //определение соседей контактных площадок
         this.determiningTheNeighborsOfContactSites(contacts, printedCircuitBoard);
 
+        return this.neighboringContacts;
     }
 
     private Map<Integer, int[]> setTheCoordinatesOfContactPads(List<List<Integer>> printedCircuitBoard){
