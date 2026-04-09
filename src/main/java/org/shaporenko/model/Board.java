@@ -9,6 +9,7 @@ public class Board {
     /**
     * Список списков для представления печатной платы (её контактов) в виде матрицы смежности
     * */
+    //рассматривается удаление данного поля, так как оно бесполезно
     private List<List<Integer>> board = null; //матрица смежности
     private static List<LinkedList<Integer>> neighboringContacts; //списки смежности
     private int n; //количество контактных площадок
@@ -21,20 +22,21 @@ public class Board {
     private int layers;
     private boolean diagonals;
 
-//    private Set<List<Integer>> routes = new HashSet<>();
-//    private List<Integer> path = new ArrayList<>();
-//    private Set<int[]> edges = new HashSet<>();
-
 
     public Board(int height, int weight,
                  double gridPitch, int layers, boolean diagonals){
-//        this.adjacencyMatrix(height, weight, gridPitch, layers, diagonals);
         this.height = height;
         this.weight = weight;
         this.gridPitch = gridPitch;
         this.layers = layers;
         this.diagonals = diagonals;
-        this.adjacencyLists(layers, diagonals);
+
+        this.setN();
+        //установка параметров контактов
+        this.setCountVerticalPoints();
+        this.setCountHorizontalPoints();
+
+        this.buildNeighborhoodGraph();
 
     }
 
@@ -59,25 +61,14 @@ public class Board {
      * параметр diagonals, который при значении true учитывает диагональный контакты,
      * как соседние
     * */
+    //недоделана
     private void adjacencyMatrix(int height, int weight,
                                                 double gridPitch, int layers, boolean diagonals){
-        int countVerticalPoints = (int) (height / gridPitch);
-        int countHorizontalPoints = (int) (weight / gridPitch);
 
-        int[][] boardMatrix = new int[countVerticalPoints][countHorizontalPoints];
-        int number = 0;
-        for (int i = 0; i < countVerticalPoints; i++){
-            for (int j = 0; j < countHorizontalPoints; j++){
-                boardMatrix[i][j] = number++;
-            }
-        }
+        List<List<Integer>> printedCircuitBoard = initializationOfContactPlatformNumbers();
 
-        Map<Integer, int[]> points = new HashMap<>();
-        for (int i = 0; i < countVerticalPoints; i++){
-            for (int j = 0; j < countHorizontalPoints; j++){
-                points.put(boardMatrix[i][j], new int[]{i, j});
-            }
-        }
+        Map<Integer, int[]> contacts = setTheCoordinatesOfContactPads(printedCircuitBoard);
+
 //        System.out.println(points.size());
 //        for (int i=0; i < points.size(); i++){
 //            System.out.println(Arrays.toString(points.get(i)));
@@ -89,16 +80,13 @@ public class Board {
 //            }
 //            System.out.println();
 //        }
-
-
         //Формирования матрицы смежности
         this.board = new ArrayList<>();
-        for (int i = 0; i < number*layers; i++){
+        for (int i = 0; i < this.n*layers; i++){
             this.board.add(i, new ArrayList<>());
-            for (int j=0; j < number*layers; j++){
+            for (int j=0; j < this.n*layers; j++){
                 this.board.get(i).add(0);
             }
-//            System.out.println(this.board.get(i));
         }
 
         //создание матрицы смежности
@@ -123,77 +111,50 @@ public class Board {
             }
         }*/
 
-        if (!diagonals){
-            int count = 0;
-            for (int l = 0; l < layers; l++) {
-                for (int n = 0; n < number; n++) {
-                    int el = n + number *l;
-                    List<Integer> boardN = this.board.get(el);
+        for (int l = 0; l < layers; l++) {
+            for (int n = 0; n < this.n; n++) {
+                int el = n + this.n *l;
+                List<Integer> boardN = this.board.get(el);
 //                    System.out.println(el);
-                    for (int i = 0; i < countVerticalPoints; i++) {
-                        for (int j = 0; j < countHorizontalPoints; j++) {
-                            if (neighbors(i, j, points.get(n)[0], points.get(n)[1])) {
-                                boardN.remove(boardMatrix[i][j]+number*l);
-                                boardN.add(boardMatrix[i][j]+number*l, 1);
-                                count++;
+                for (int i = 0; i < countVerticalPoints; i++) {
+                    for (int j = 0; j < countHorizontalPoints; j++) {
+                        if (!diagonals){
+                            if (neighbors(i, j, contacts.get(n)[0], contacts.get(n)[1])) {
+                                boardN.remove(printedCircuitBoard.get(i).get(j)+this.n*l);
+                                boardN.add(printedCircuitBoard.get(i).get(j)+this.n*l, 1);
                             } /*else {
 //                                System.out.println("i, j - " + i + ", " + j);
                                 boardN.add(boardMatrix[i][j]*(l+1), 0);
                             }*/
                         }
-                    }
-                    try {
-                        boardN.remove(el + countHorizontalPoints * countVerticalPoints);
-                        boardN.add(el + countHorizontalPoints * countVerticalPoints, 1);
-                    }
-                    catch (IndexOutOfBoundsException e){
-
-                    }
-                    try {
-                        boardN.remove(el - countHorizontalPoints * countVerticalPoints);
-                        boardN.add(el - countHorizontalPoints * countVerticalPoints, 1);
-                    }
-                    catch (IndexOutOfBoundsException e){
-
-                    }
-                }
-//            System.out.println("Количество единиц - " + count);
-            }
-        }
-        else {
-            for (int l = 0; l < layers; l++) {
-                for (int n = 0; n < number; n++) {
-//                System.out.println("number - " + n);
-                    int el = n + number *l;
-                    List<Integer> boardN = this.board.get(el);
-                    for (int i = 0; i < countVerticalPoints; i++) {
-                        for (int j = 0; j < countHorizontalPoints; j++) {
-                            if (neighborsDiagonals(i, j, points.get(n)[0], points.get(n)[1])) {
-                                boardN.remove(boardMatrix[i][j]+number*l);
-                                boardN.add(boardMatrix[i][j]+number*l, 1);
+                        else {
+                            if (neighborsDiagonals(i, j, contacts.get(n)[0], contacts.get(n)[1])) {
+                                boardN.remove(printedCircuitBoard.get(i).get(j)+this.n*l);
+                                boardN.add(printedCircuitBoard.get(i).get(j)+this.n*l, 1);
                             }/* else {
                                 boardN.add(boardMatrix[i][j], 0);
                             }*/
                         }
                     }
+                }
+                try {
+                    boardN.remove(el + countHorizontalPoints * countVerticalPoints);
+                    boardN.add(el + countHorizontalPoints * countVerticalPoints, 1);
+                }
+                catch (IndexOutOfBoundsException e){
 
-                    try {
-                        boardN.remove(el + countHorizontalPoints * countVerticalPoints);
-                        boardN.add(el + countHorizontalPoints * countVerticalPoints, 1);
-                    }
-                    catch (IndexOutOfBoundsException e){
+                }
+                try {
+                    boardN.remove(el - countHorizontalPoints * countVerticalPoints);
+                    boardN.add(el - countHorizontalPoints * countVerticalPoints, 1);
+                }
+                catch (IndexOutOfBoundsException e){
 
-                    }
-                    try {
-                        boardN.remove(el - countHorizontalPoints * countVerticalPoints);
-                        boardN.add(el - countHorizontalPoints * countVerticalPoints, 1);
-                    }
-                    catch (IndexOutOfBoundsException e){
-
-                    }
                 }
             }
+//            System.out.println("Количество единиц - " + count);
         }
+
     }
 
     private void setCountVerticalPoints(){
@@ -241,188 +202,77 @@ public class Board {
      * параметр diagonals, который при значении true учитывает диагональные контакты,
      * как соседние
      * */
-    private void adjacencyLists(int layers, boolean diagonals){
-
-        //установка параметров контактов
-        this.setCountVerticalPoints();
-        this.setCountHorizontalPoints();
+    private void buildNeighborhoodGraph(){
 
         //создание печатной платы
-        int[][] boardMatrix = new int[countVerticalPoints][countHorizontalPoints];
-        int number = 0;
-        for (int i = 0; i < countVerticalPoints; i++){
-            for (int j = 0; j < countHorizontalPoints; j++){
-                boardMatrix[i][j] = number++;
-            }
-        }
-
         List<List<Integer>>  printedCircuitBoard = initializationOfContactPlatformNumbers();
 
         //вывод номеров контактов
-        System.out.println(this.showContactPlatform(printedCircuitBoard));
+//        System.out.println(this.showContactPlatform(printedCircuitBoard));
 
-        //
-        Map<Integer, int[]> points = new HashMap<>();
-        for (int i = 0; i < countVerticalPoints; i++){
-            for (int j = 0; j < countHorizontalPoints; j++){
-                points.put(boardMatrix[i][j], new int[]{i, j});
-            }
-        }
+        //создание координат контактных площадок
+        Map<Integer, int[]> contacts = this.setTheCoordinatesOfContactPads(printedCircuitBoard);
 
         //создание списков смежности контактов
         this.initializationOfNeighboringContacts();
 
-
-        if (!diagonals){
-            for (int l = 0; l < layers; l++) {
-                for (int n = 0; n < number; n++) {
-                    int el = n + number *l;
-                    LinkedList<Integer> boardN = this.neighboringContacts.get(el);
-                    for (int i = 0; i < countVerticalPoints; i++) {
-                        for (int j = 0; j < countHorizontalPoints; j++) {
-                            if (neighbors(i, j, points.get(n)[0], points.get(n)[1])) {
-//                                boardN.ins(boardMatrix[i][j]+number*l, 1);
-                                boardN.ins(boardMatrix[i][j]+number*l);
-//                                boardN.ins(1);
-                            }
-                        }
-                    }
-
-                    int down = el + countHorizontalPoints * countVerticalPoints;
-                    int up = el - countHorizontalPoints * countVerticalPoints;
-//                    System.out.println("el - " + el + " down - " + down + " up - " + up);
-                    if (up >= 0 && up < number * layers) {
-//                        boardN.ins(el + countHorizontalPoints * countVerticalPoints, 1);
-                        boardN.ins(up);
-                    }
-//                        boardN.ins(1);
-                    if (down >= 0 && down < number * layers) {
-                        boardN.ins(down);
-//                        boardN.ins(1);
-                    }
-                }
-            }
-        }
-        else {
-            for (int l = 0; l < layers; l++) {
-                for (int n = 0; n < number; n++) {
-                    int el = n + number *l;
-                    LinkedList<Integer> boardN = this.neighboringContacts.get(el);
-                    for (int i = 0; i < countVerticalPoints; i++) {
-                        for (int j = 0; j < countHorizontalPoints; j++) {
-                            if (neighborsDiagonals(i, j, points.get(n)[0], points.get(n)[1])) {
-//                                boardN.remove(boardMatrix[i][j]+number*l);
-                                boardN.ins(boardMatrix[i][j]+number*l);
-//                                boardN.ins(1);
-                            }
-                        }
-                    }
-                    int down = el + countHorizontalPoints * countVerticalPoints;
-                    int up = el - countHorizontalPoints * countVerticalPoints;
-//                    System.out.println("el - " + el + " down - " + down + " up - " + up);
-                    if (up >= 0 && up < number * layers) {
-//                        boardN.ins(el + countHorizontalPoints * countVerticalPoints, 1);
-                        boardN.ins(up);
-                    }
-//                        boardN.ins(1);
-                    if (down >= 0 && down < number*layers) {
-                        boardN.ins(down);
-//                        boardN.ins(1);
-                    }
-                }
-            }
-        }
+        //определение соседей контактных площадок
+        this.determiningTheNeighborsOfContactSites(contacts, printedCircuitBoard);
 
     }
 
-
-    public List<LinkedList<Integer>> adjacencyListsReturn(int height, int weight,
-                                double gridPitch, int layers, boolean diagonals){
-        int countVerticalPoints = (int) (height / gridPitch);
-        int countHorizontalPoints = (int) (weight / gridPitch);
-
-        int[][] boardMatrix = new int[countVerticalPoints][countHorizontalPoints];
-        int number = 0;
-        for (int i = 0; i < countVerticalPoints; i++){
-            for (int j = 0; j < countHorizontalPoints; j++){
-                boardMatrix[i][j] = number++;
+    private Map<Integer, int[]> setTheCoordinatesOfContactPads(List<List<Integer>> printedCircuitBoard){
+        Map<Integer, int[]> contacts = new HashMap<>();
+        for (int i = 0; i < this.countVerticalPoints; i++){
+            for (int j = 0; j < this.countHorizontalPoints; j++){
+                contacts.put(printedCircuitBoard.get(i).get(j), new int[]{i, j});
             }
         }
+        return contacts;
+    }
 
-        Map<Integer, int[]> points = new HashMap<>();
-        for (int i = 0; i < countVerticalPoints; i++){
-            for (int j = 0; j < countHorizontalPoints; j++){
-                points.put(boardMatrix[i][j], new int[]{i, j});
-            }
-        }
-
-        List<LinkedList<Integer>> neighboringContactss = new ArrayList<>();
-
-        for (int i = 0; i < number * layers; i++){
-            neighboringContactss.add(i, new LinkedList<>());
-        }
-
-        if (!diagonals){
-            for (int l = 0; l < layers; l++) {
-                for (int n = 0; n < number; n++) {
-                    int el = n + number *l;
-                    LinkedList<Integer> boardN = neighboringContactss.get(el);
-                    for (int i = 0; i < countVerticalPoints; i++) {
-                        for (int j = 0; j < countHorizontalPoints; j++) {
-                            if (neighbors(i, j, points.get(n)[0], points.get(n)[1])) {
-//                                boardN.ins(boardMatrix[i][j]+number*l, 1);
-                                boardN.ins(boardMatrix[i][j]+number*l);
-//                                boardN.ins(1);
-                            }
-                        }
-                    }
-
-                    int down = el + countHorizontalPoints * countVerticalPoints;
-                    int up = el - countHorizontalPoints * countVerticalPoints;
-//                    System.out.println("el - " + el + " down - " + down + " up - " + up);
-                    if (up >= 0 && up < number * layers) {
-//                        boardN.ins(el + countHorizontalPoints * countVerticalPoints, 1);
-                        boardN.ins(up);
-                    }
-//                        boardN.ins(1);
-                    if (down >= 0 && down < number * layers) {
-                        boardN.ins(down);
-//                        boardN.ins(1);
-                    }
-                }
-            }
-        }
-        else {
-            for (int l = 0; l < layers; l++) {
-                for (int n = 0; n < number; n++) {
-                    int el = n + number *l;
-                    LinkedList<Integer> boardN = neighboringContactss.get(el);
-                    for (int i = 0; i < countVerticalPoints; i++) {
-                        for (int j = 0; j < countHorizontalPoints; j++) {
+    private void determiningTheNeighborsOfContactSites(Map<Integer, int[]> points,
+                                                       List<List<Integer>> printedCircuitBoard){
+        int contactFieldNumber = this.getN() / layers;
+        for (int l = 0; l < layers; l++) {
+            for (int n = 0; n < contactFieldNumber; n++) {
+                int el = n + contactFieldNumber *l;
+                LinkedList<Integer> boardN = this.neighboringContacts.get(el);
+                for (int i = 0; i < countVerticalPoints; i++) {
+                    for (int j = 0; j < countHorizontalPoints; j++) {
+                        if (diagonals) {
                             if (neighborsDiagonals(i, j, points.get(n)[0], points.get(n)[1])) {
 //                                boardN.remove(boardMatrix[i][j]+number*l);
-                                boardN.ins(boardMatrix[i][j]+number*l);
+                                boardN.ins(printedCircuitBoard.get(i).get(j) + contactFieldNumber * l);
+//                                boardN.ins(1);
+                            }
+                        }
+                        else {
+                            if (neighbors(i, j, points.get(n)[0], points.get(n)[1])) {
+//                                boardN.ins(boardMatrix[i][j]+number*l, 1);
+                                boardN.ins(printedCircuitBoard.get(i).get(j)+contactFieldNumber*l);
 //                                boardN.ins(1);
                             }
                         }
                     }
-                    int down = el + countHorizontalPoints * countVerticalPoints;
-                    int up = el - countHorizontalPoints * countVerticalPoints;
+                }
+                int down = el + countHorizontalPoints * countVerticalPoints;
+                int up = el - countHorizontalPoints * countVerticalPoints;
 //                    System.out.println("el - " + el + " down - " + down + " up - " + up);
-                    if (up >= 0 && up < number * layers) {
+                if (up >= 0 && up < contactFieldNumber * layers) {
 //                        boardN.ins(el + countHorizontalPoints * countVerticalPoints, 1);
-                        boardN.ins(up);
-                    }
+                    boardN.ins(up);
+                }
 //                        boardN.ins(1);
-                    if (down >= 0 && down < number*layers) {
-                        boardN.ins(down);
+                if (down >= 0 && down < contactFieldNumber*layers) {
+                    boardN.ins(down);
 //                        boardN.ins(1);
-                    }
                 }
             }
         }
-        return neighboringContactss;
     }
+
+
     /**
     * Метод возвращающий являются ли контакты по координатам x1,y1 и x2,y2 соседними
      * Ортоганальное соседство
