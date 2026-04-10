@@ -170,7 +170,7 @@ public class Board {
         int number = 0;
         for (int i=0; i < this.countVerticalPoints; i++){
             contactsPlatform.add(new ArrayList<>(this.countHorizontalPoints));
-            for (int j=0; j < this.countVerticalPoints; j++){
+            for (int j=0; j < this.countHorizontalPoints; j++){
                 List<Integer> horizontal = contactsPlatform.get(i);
                 horizontal.add(number++);
             }
@@ -290,7 +290,7 @@ public class Board {
     /**
      * Метод возвращающий являются ли контакты по координатам x1,y1 и x2,y2 соседними,
      * учитывая диагональные
-     * Эвклидово соседство
+     * Евклидово соседство
      * */
     private boolean neighborsDiagonals(int x1, int y1, int x2, int y2){
         if ( ((x1 - x2 == 1 || x1 - x2 == -1) && (y1-y2 <= 1 && y1-y2 >= -1))
@@ -303,32 +303,32 @@ public class Board {
     public Set<List<Integer>> splitIntoSegments(int sizeSegment){
         Set<List<Integer>> segments = new HashSet<>();
 
-        int source = 0;
-        int beginningPointOfTheLine = 0;
+        int startingPointOfTheSegment = 0;
+        int firstPointInLine = 0;
         while(true) {
             List<Integer> segment = new ArrayList<>();
-//            segment.add(source);
-            for (int m = 0; m < sizeSegment; m++) { //m - номер строки в сегменте
-                int pointSegment = source + (m * this.countHorizontalPoints);
+            for (int rowInSegment = 0; rowInSegment < sizeSegment; rowInSegment++) {
+                int pointSegment = startingPointOfTheSegment + (rowInSegment * this.countHorizontalPoints);
                 if (pointSegment > this.n){
                     break;
                 }
-                for (int k = 0; k < sizeSegment; k++) {//k - номер столбца в сегменте
-                    if (pointSegment+k >= beginningPointOfTheLine + ((m+1) * this.countHorizontalPoints)
-                        || pointSegment + k >= this.n){
+                for (int columnInSegment = 0; columnInSegment < sizeSegment; columnInSegment++) {
+                    if (pointSegment+ columnInSegment >=
+                            firstPointInLine + ((rowInSegment+1) * this.countHorizontalPoints)
+                            || pointSegment + columnInSegment >= this.n){
                         break;
                     }
-                    segment.add(pointSegment + k);
+                    segment.add(pointSegment + columnInSegment);
                 }
             }
-            source += (sizeSegment - 1);
-            if (source >= beginningPointOfTheLine + (this.countHorizontalPoints-1)){
-                beginningPointOfTheLine += ((sizeSegment - 1) * this.countHorizontalPoints);
-                if (beginningPointOfTheLine >= this.countVerticalPoints * (this.countHorizontalPoints-1)){
+            startingPointOfTheSegment += (sizeSegment - 1);
+            if (startingPointOfTheSegment >= firstPointInLine + (this.countHorizontalPoints-1)){
+                firstPointInLine += ((sizeSegment - 1) * this.countHorizontalPoints);
+                if (firstPointInLine >= this.countVerticalPoints * (this.countHorizontalPoints-1)){
                     segments.add(segment);
                     break;
                 }
-                source = beginningPointOfTheLine;
+                startingPointOfTheSegment = firstPointInLine;
             }
             segments.add(segment);
         }

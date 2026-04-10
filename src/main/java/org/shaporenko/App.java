@@ -9,8 +9,8 @@ import java.util.List;
 public class App
 {
 
-    private final static int height = 6;
-    private final static int weight = 6;
+    private final static int height = 500;
+    private final static int weight = 500;
     private final static double gridPitch = 1;
     private final static int layers = 1;
     private final static boolean diagonals = false;
@@ -30,7 +30,7 @@ public class App
         int n2 = n * (n-1);
         System.out.println("n - " + n);
 
-        board.splitIntoSegments(3);
+        board.splitIntoSegments(5);
 
 
     }

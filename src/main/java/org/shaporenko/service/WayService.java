@@ -72,12 +72,18 @@ public class WayService {
 //        for (Integer i : path) {
 //                System.out.print(i + "  ");
 //            }
-
+        int maxSize = 0;
         for (int i=0; i < this.board.getN(); i++){
             for (int j=i; j<this.board.getN(); j++){
                 if (i != j) {
 //                    System.out.println("i - " + i + ", j - " + j);
-                    this.routes = dfs.findAllSimplePathsBetweenSourceAndTarget(i, j);
+                    Set<List<Integer>> routes1 = dfs.findAllSimplePathsBetweenSourceAndTarget(i, j);
+                    for (List<Integer> route : routes1) {
+                        if (maxSize < route.size()){
+                            maxSize = route.size();
+                        }
+                        this.routes.add(route);
+                    }
                 }
             }
         }
@@ -85,6 +91,7 @@ public class WayService {
 //            System.out.println(lst);
 //        }
         System.out.println("Количество всех путей: " + this.routes.size());
+        System.out.println("Максимальная длина пути: " + maxSize);
     }
 
 

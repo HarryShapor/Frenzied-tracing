@@ -17,7 +17,7 @@ public class LinkedList<T> implements Iterable<T> {
 
     public void ins(T value, int position) {
         if (position < 0 || position > this.size) {
-            throw new IndexOutOfBoundsException("Позиция вне границ");
+            throw new IndexOutOfBoundsException("IndexOutOfBoundsException: Position outside the borders!");
         }
         Node newNode = new Node(value);
         if (position == 0) {
@@ -43,10 +43,6 @@ public class LinkedList<T> implements Iterable<T> {
             this.head = newNode;
             this.current = newNode;
         } else {
-//            Node current = this.head;
-//            for (int i = 0; i < size - 1; i++) {
-//                current = current.next;
-//            }
             newNode.next = this.current.next;
             this.current.next = newNode;
         }
@@ -80,7 +76,7 @@ public class LinkedList<T> implements Iterable<T> {
 
     public T ret(int index) {
         if (index < 0 || index >= this.size) {
-            throw new IndexOutOfBoundsException("Индекс вне границ");
+            throw new IndexOutOfBoundsException("IndexOutOfBoundsException: The index is out of bounds!");
         }
 
         Node current = this.head;
