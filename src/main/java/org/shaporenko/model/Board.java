@@ -65,7 +65,7 @@ public class Board {
     private void adjacencyMatrix(int height, int weight,
                                                 double gridPitch, int layers, boolean diagonals){
 
-        List<List<Integer>> printedCircuitBoard = initializationOfContactPlatformNumbers();
+        List<List<Integer>> printedCircuitBoard = createOfContactPlatformNumbers();
 
         Map<Integer, int[]> contacts = setTheCoordinatesOfContactPads(printedCircuitBoard);
 
@@ -165,7 +165,7 @@ public class Board {
         this.countHorizontalPoints = (int) (this.weight / this.gridPitch);
     }
 
-    private List<List<Integer>> initializationOfContactPlatformNumbers(){
+    private List<List<Integer>> createOfContactPlatformNumbers(){
         List<List<Integer>> contactsPlatform = new ArrayList<>(this.countVerticalPoints);
         int number = 0;
         for (int i=0; i < this.countVerticalPoints; i++){
@@ -205,7 +205,7 @@ public class Board {
     private List<LinkedList<Integer>> buildNeighborhoodGraph(){
 
         //создание печатной платы
-        List<List<Integer>>  printedCircuitBoard = initializationOfContactPlatformNumbers();
+        List<List<Integer>>  printedCircuitBoard = createOfContactPlatformNumbers();
 
         //вывод номеров контактов
         System.out.println(this.showContactPlatform(printedCircuitBoard));
@@ -300,6 +300,45 @@ public class Board {
         return false;
     }
 
+    public Set<List<Integer>> splitIntoSegments(int sizeSegment){
+        Set<List<Integer>> segments = new HashSet<>();
+
+        int source = 0;
+        int beginningPointOfTheLine = 0;
+        while(true) {
+            List<Integer> segment = new ArrayList<>();
+//            segment.add(source);
+            for (int m = 0; m < sizeSegment; m++) { //m - номер строки в сегменте
+                int pointSegment = source + (m * this.countHorizontalPoints);
+                if (pointSegment > this.n){
+                    break;
+                }
+                for (int k = 0; k < sizeSegment; k++) {//k - номер столбца в сегменте
+                    if (pointSegment+k >= beginningPointOfTheLine + ((m+1) * this.countHorizontalPoints)
+                        || pointSegment + k >= this.n){
+                        break;
+                    }
+                    segment.add(pointSegment + k);
+                }
+            }
+            source += (sizeSegment - 1);
+            if (source >= beginningPointOfTheLine + (this.countHorizontalPoints-1)){
+                beginningPointOfTheLine += ((sizeSegment - 1) * this.countHorizontalPoints);
+                if (beginningPointOfTheLine >= this.countVerticalPoints * (this.countHorizontalPoints-1)){
+                    segments.add(segment);
+                    break;
+                }
+                source = beginningPointOfTheLine;
+            }
+            segments.add(segment);
+        }
+
+//        for (List<Integer> segment : segments){
+//            System.out.println(segment);
+//        }
+
+        return segments;
+    }
 
 
     public void matrixToList(){

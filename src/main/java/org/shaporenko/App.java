@@ -9,9 +9,9 @@ import java.util.List;
 public class App
 {
 
-    private final static int height = 4;
-    private final static int weight = 4;
-    private final static double gridPitch = 2;
+    private final static int height = 6;
+    private final static int weight = 6;
+    private final static double gridPitch = 1;
     private final static int layers = 1;
     private final static boolean diagonals = false;
 
@@ -22,14 +22,21 @@ public class App
         System.out.println(board);
         System.out.println();
 //        board.matrixToList();
-        WayService wayService = new WayService(board);
-        wayService.allWays();
+//        WayService wayService = new WayService(board);
+//        wayService.allWays();
 
         List<LinkedList<Integer>> boardList = board.getNeighboringContacts();
         int n = (height * weight);
         int n2 = n * (n-1);
         System.out.println("n - " + n);
-//        int b1 = 0;
+
+        board.splitIntoSegments(3);
+
+
+    }
+    //мусор
+    {
+        //        int b1 = 0;
 //        int b2 = 9;
 //        int b3 = 18;
 //        Thread t1 = new Thread(new ThreadDFS(0, 2, boardList, n * layers, 1));
@@ -100,11 +107,12 @@ public class App
         // 2 слой - 9 - 16
         // 3 слой - 17 - 24
         /*
-        * запуск от 1 по 4 до 24
-        * запуск от 5 по 8 до 24
-        * запуск от 9 по 16 до 24
-        * запуск от 17 по 24 до 24
-        *
-        * */
+         * запуск от 1 по 4 до 24
+         * запуск от 5 по 8 до 24
+         * запуск от 9 по 16 до 24
+         * запуск от 17 по 24 до 24
+         *
+         * */
+
     }
 }
