@@ -1,14 +1,16 @@
-package org.shaporenko.model;
+package org.shaporenko.service;
 
 import org.shaporenko.util.LinkedList;
+import org.springframework.stereotype.Service;
 
 import java.util.*;
 
-public class Board {
+@Service
+public class BoardService {
 
     /**
-    * Список списков для представления печатной платы (её контактов) в виде матрицы смежности
-    * */
+     * Список списков для представления печатной платы (её контактов) в виде матрицы смежности
+     * */
     //рассматривается удаление данного поля, так как оно бесполезно
     private List<List<Integer>> board = null; //матрица смежности
     private List<LinkedList<Integer>> neighboringContacts; //списки смежности
@@ -22,23 +24,6 @@ public class Board {
     private int layers;
     private boolean diagonals;
 
-
-    public Board(int height, int weight,
-                 double gridPitch, int layers, boolean diagonals){
-        this.height = height;
-        this.weight = weight;
-        this.gridPitch = gridPitch;
-        this.layers = layers;
-        this.diagonals = diagonals;
-
-        this.setN();
-        //установка параметров контактов
-        this.setCountVerticalPoints();
-        this.setCountHorizontalPoints();
-
-        this.buildNeighborhoodGraph();
-
-    }
 
     public List<List<Integer>> getBoard() {
         return board;
@@ -57,13 +42,13 @@ public class Board {
     }
 
     /**
-    * Метод принимающий параметры высоты, ширины, шага сетки платы, количество слоёв и
+     * Метод принимающий параметры высоты, ширины, шага сетки платы, количество слоёв и
      * параметр diagonals, который при значении true учитывает диагональный контакты,
      * как соседние
-    * */
+     * */
     //недоделана
     private void adjacencyMatrix(int height, int weight,
-                                                double gridPitch, int layers, boolean diagonals){
+                                 double gridPitch, int layers, boolean diagonals){
 
         List<List<Integer>> printedCircuitBoard = createOfContactPlatformNumbers();
 
@@ -275,9 +260,9 @@ public class Board {
 
 
     /**
-    * Метод возвращающий являются ли контакты по координатам x1,y1 и x2,y2 соседними
+     * Метод возвращающий являются ли контакты по координатам x1,y1 и x2,y2 соседними
      * Ортоганальное соседство
-    * */
+     * */
     private boolean neighbors(int x1, int y1, int x2, int y2){
         if ( ((x1 - x2 == 1 || x1 - x2 == -1) && (y1 - y2 == 0))
                 || ((y1 - y2 == 1 || y1 - y2 == -1) && (x1 - x2 == 0))

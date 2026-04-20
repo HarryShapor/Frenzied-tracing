@@ -1,6 +1,5 @@
 package org.shaporenko.service;
 
-import org.shaporenko.model.Board;
 import org.shaporenko.util.LinkedList;
 
 import java.util.HashSet;

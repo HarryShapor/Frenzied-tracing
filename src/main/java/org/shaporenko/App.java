@@ -1,8 +1,6 @@
 package org.shaporenko;
 
-import org.shaporenko.service.WayService;
 import org.shaporenko.util.LinkedList;
-import org.shaporenko.model.Board;
 
 import java.util.List;
 
@@ -15,7 +13,7 @@ public class App
     private final static int layers = 1;
     private final static boolean diagonals = false;
 
-    public static void main( String[] args )
+    public void main( String[] args )
     {
 
         Board board = new Board(height, weight, gridPitch, layers, diagonals);
@@ -31,7 +29,6 @@ public class App
         System.out.println("n - " + n);
 
         board.splitIntoSegments(5);
-
 
     }
     //мусор
