@@ -1,48 +1,44 @@
 package org.shaporenko.entity;
 
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.springframework.data.annotation.Id;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Entity
-@Table(name = "")
+@Table(name = "boards")
 public class Board {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "")
-    private double height;
+    @Column(name = "height")
+    private Double height;
 
-    @Column(name = "")
-    private double width;
+    @Column(name = "width")
+    private Double width;
 
-    @Column(name = "")
-    private double gridPitch;
+    @Column(name = "grid_pitch")
+    private Double gridPitch;
 
-    @Column(name = "")
-    private int layers;
+    @Column(name = "layers")
+    private Integer layers;
 
-    @Column(name = "")
-    private boolean diagonals;
+    @Column(name = "diagonals")
+    private Boolean diagonals;
 
-    @Column(name = "")
-    private int countVerticalPoints;
+    @Column(name = "count_vertical_points")
+    private Integer countVerticalPoints;
 
-    @Column(name = "")
-    private int countHorizontalPoints;
+    @Column(name = "count_horizontal_points")
+    private Integer countHorizontalPoints;
 
-    @Column(name = "")
-    private int n;
+    @Column(name = "n")
+    private Integer n;
 
 }
