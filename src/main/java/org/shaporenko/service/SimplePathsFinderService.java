@@ -1,30 +1,24 @@
 package org.shaporenko.service;
 
+import lombok.RequiredArgsConstructor;
 import org.shaporenko.util.LinkedList;
+import org.springframework.stereotype.Service;
 
 import java.util.*;
 
-public class AllPathsFinder {
+@Service
+@RequiredArgsConstructor
+public class SimplePathsFinderService {
 
-    private Board board;
+    private final GraphService graphService;
 
-    public void setBoard(Board board) {
-        this.board = board;
-    }
-
-    public Board getBoard() {
-        return board;
-    }
-
-    public AllPathsFinder(Board board) {
-        this.board = board;
-    }
-
-    private void dfsRecurs(int src, int dst){
+    private void dfsRecurs(int src, int dst, Long id){
 
         Set<List<Integer>> paths = new HashSet<>();
         List<Integer> currentPath = new ArrayList<>();
         Set<int[]> edges = new HashSet<>();
+
+        List<LinkedList<Integer>> neightboringContacts = graphService.getNeighborhoodGraph(id);
 
         int p = src;
         Set<Integer> edge = new HashSet<>();
@@ -40,10 +34,10 @@ public class AllPathsFinder {
                 p = src;
             }
 
-            if (p < this.board.getNeighboringContacts().size()) {
-                System.out.println(this.board.getNeighboringContacts().get(p));
+            if (p < neightboringContacts.size()) {
+                System.out.println(neightboringContacts.get(p));
                 System.out.println();
-                for (int val : this.board.getNeighboringContacts().get(p)) {
+                for (int val : neightboringContacts.get(p)) {
 //                    System.out.println("val - " + val);
                     edge = new HashSet<>();
                     edge.add(src);
@@ -61,10 +55,11 @@ public class AllPathsFinder {
         System.out.println(paths.size());
     }
 
-    private int chooseTheDirectionOfThePath(int current, List<Integer> currentPath, Set<int[]> edges){
+    private int chooseTheDirectionOfThePath(int current, List<Integer> currentPath,
+                                            Set<int[]> edges, List<LinkedList<Integer>> neightboringContacts){
         boolean flag;
 
-        for (Integer currnetNeighboring : this.board.getNeighboringContacts().get(current)) {
+        for (Integer currnetNeighboring : neightboringContacts.get(current)) {
             flag = false;
             //цикл по парам рёбер
             for (int[] edge : edges) {
@@ -86,13 +81,14 @@ public class AllPathsFinder {
         return current;
     }
 
-    public Set<List<Integer>> findAllSimplePathsBetweenSourceAndTarget(int source, int target){
+    public Set<List<Integer>> findAllSimplePathsBetweenSourceAndTarget(int source, int target, Long id){
 
         //инициализация структур данных
         Set<List<Integer>> paths = new HashSet<>();
         List<Integer> currentPath = new ArrayList<>();
         Set<int[]> edges = new HashSet<>();
 
+        List<LinkedList<Integer>> neightboringContacts = graphService.getNeighborhoodGraph(id);
 
         int current = source;
         int size;
@@ -102,7 +98,7 @@ public class AllPathsFinder {
         while (true) {
             size = currentPath.size();
 
-            int currentNew = chooseTheDirectionOfThePath(current, currentPath, edges);
+            int currentNew = chooseTheDirectionOfThePath(current, currentPath, edges, neightboringContacts);
             if (current != currentNew) {
                 currentPath.add(currentNew); //добавляем текущий контакт
                 edges.add(new int[]{current, currentNew}); //добавляем ребро с ним
