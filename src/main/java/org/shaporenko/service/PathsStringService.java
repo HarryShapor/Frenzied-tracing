@@ -2,15 +2,12 @@ package org.shaporenko.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.shaporenko.dto.paths.MultiPathRequest;
 import org.shaporenko.dto.paths.PathWithTurnInfo;
 import org.shaporenko.dto.paths.PathsResponse;
 import org.shaporenko.dto.paths.PathsSearchRequest;
 import org.shaporenko.entity.Board;
-import org.shaporenko.entity.PathBitmask;
 import org.shaporenko.entity.PathString;
 import org.shaporenko.repository.BoardRepository;
-import org.shaporenko.repository.PathBitmaskRepository;
 import org.shaporenko.repository.PathStringRepository;
 import org.shaporenko.util.LinkedList;
 import org.springframework.stereotype.Service;
@@ -18,50 +15,59 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.shaporenko.service.SimplePathsFinderService.*;
+import static org.shaporenko.service.SimplePathsFinderService.dfs2;
 
 @Service
 @RequiredArgsConstructor
-public class PathsService {
+public class PathsStringService {
 
-    private final PathBitmaskRepository pathBitmaskRepository;
     private final BoardRepository boardRepository;
     private final GraphService graphService;
+    private final PathStringRepository pathStringRepository;
 
 
     private final SimplePathsFinderService simplePathsFinderService;
 
     public PathsResponse getAllPaths(){
-        List<PathBitmask> pathBitmasks = pathBitmaskRepository.findAll();
-        return createPathsResponse(pathBitmasks);
+        List<PathString> pathStrings = pathStringRepository.findAll();
+        return createPathsStringResponse(pathStrings);
     }
+
+    public PathsResponse getPathsStartAndEnd(PathsSearchRequest dto){
+        List<PathString> pathStrings = pathStringRepository
+                .findByStartVertexAndEndVertex(dto.start(), dto.end());
+        return createPathsStringResponse(pathStrings);
+    }
+
+/*    public PathsResponse getMultiPathsString(MultiPathRequest dto){
+        List<Object[]> pairs = dto.queries().stream()
+                .map(q -> new Object[]{q.start(), q.end()})
+                .collect(Collectors.toList());
+
+        List<PathString> pathStrings = pathStringRepository
+                .findPathsByQueries(pairs, dto.maxLength());
+        return createPathsStringResponse(pathStrings);
+    }*/
 
     public void calculateAllPaths(Long id){
         Board board = boardRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Не нашлась"));
+                .orElseThrow(() -> new RuntimeException("Not found board with id: " + id));
 
-        Set<List<Integer>> paths = allWays(board);
+        List<PathWithTurnInfo> paths = allWaysWithTurnInfo(board);
 
         calculateAllPaths(paths);
-
     }
 
-
-    private PathsResponse createPathsResponse(List<PathBitmask> pathBitmasks){
-        Set<List<Integer>> paths = pathBitmasks.stream()
+    private PathsResponse createPathsStringResponse(List<PathString> pathStrings){
+        Set<List<Integer>> paths = pathStrings.stream()
                 .map(entity -> {
-                    List<Integer> path = new ArrayList<>();
-                    byte[] mask = entity.getVertexMask();
-
-                    // Извлекаем вершины из битовой маски
-                    for (int i = 0; i < 25; i++) {
-                        if ((mask[i / 8] & (1 << (i % 8))) != 0) {
-                            path.add(i);
-                        }
-                    }
-
-                    // Сортируем для сохранения порядка (вершины должны идти по порядку)
-                    path.sort(Integer::compareTo);
+                    // Получаем путь из строки "0,1,3,5"
+                    String pathStr = entity.getPathString();
+                    List<Integer> path = Arrays.stream(pathStr.split(","))
+                            .map(String::trim)
+                            .filter(s -> !s.isEmpty())
+                            .map(Integer::parseInt)
+                            .collect(Collectors.toList());
                     return path;
                 })
                 .collect(Collectors.toSet());
@@ -71,36 +77,40 @@ public class PathsService {
 
     @Transactional
     public void calculateAllPaths(
-            Set<List<Integer>> paths) {
+            List<PathWithTurnInfo> paths) {
 
-        List<PathBitmask> entities = paths.stream()
-                .map(path -> createEntity(path))
+        int maxLength = 7;
+
+        List<PathString> entities = paths.stream()
+                .filter(path -> path.turns() < maxLength)
+                .map(this::createEntity)
                 .collect(Collectors.toList());
 
-        // Массовое сохранение
-        pathBitmaskRepository.saveAll(entities);
+        pathStringRepository.saveAll(entities);
     }
 
+    private PathString createEntity(PathWithTurnInfo pathWithTurnInfo) {
+        PathString entity = new PathString();
 
-    private PathBitmask createEntity(List<Integer> path) {
-        PathBitmask entity = new PathBitmask();
+        List<Integer> path = pathWithTurnInfo.path();
 
-        byte[] byteMask = new byte[(25 + 7) / 8];
-        for (Integer vertex : path) {
-            if (vertex >= 0 && vertex < 25) {
-                byteMask[vertex / 8] |= (1 << (vertex % 8));
-            }
-        }
+        String pathString = path.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(","));
+        entity.setPathString(pathString);
 
-        entity.setVertexMask(byteMask);
-        entity.setStartVertex(path.getFirst());
-        entity.setEndVertex(path.getLast());
+        entity.setStartVertex(path.get(0));
+        entity.setEndVertex(path.get(path.size() - 1));
+
         entity.setPathLength(path.size());
+
+        entity.setTurns(pathWithTurnInfo.turns());
 
         return entity;
     }
 
-    private PathString createEntityString(List<Integer> path) {
+
+    private PathString createEntity(List<Integer> path) {
         PathString entity = new PathString();
 
         String pathString = path.stream()
@@ -139,16 +149,12 @@ public class PathsService {
 
     public Set<List<Integer>> allWays(Board board){
         Set<List<Integer>> routes = new HashSet<>();
-        int maxSize = 0;
         for (int i=0; i < board.getN(); i++){
             for (int j=i; j<board.getN(); j++){
                 if (i != j) {
                     Set<List<Integer>> routes1 = simplePathsFinderService
                             .findAllSimplePathsBetweenSourceAndTarget(i, j, board.getId());
                     for (List<Integer> route : routes1) {
-//                        if (maxSize < route.size()){
-//                            maxSize = route.size();
-//                        }
                         routes.add(route);
                     }
                 }
