@@ -2,6 +2,7 @@ package org.shaporenko.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.shaporenko.dto.paths.MultiPathRequest;
 import org.shaporenko.dto.paths.PathWithTurnInfo;
 import org.shaporenko.dto.paths.PathsResponse;
 import org.shaporenko.dto.paths.PathsSearchRequest;
@@ -39,15 +40,29 @@ public class PathsStringService {
         return createPathsStringResponse(pathStrings);
     }
 
-/*    public PathsResponse getMultiPathsString(MultiPathRequest dto){
-        List<Object[]> pairs = dto.queries().stream()
-                .map(q -> new Object[]{q.start(), q.end()})
-                .collect(Collectors.toList());
+//    public PathsResponse getMultiPathsString(MultiPathRequest dto){
+//        List<Object[]> pairs = dto.queries().stream()
+//                .map(q -> new Object[]{q.start(), q.end()})
+//                .collect(Collectors.toList());
+//
+//
+//        return createPathsStringResponse(pathStrings);
+//    }
 
-        List<PathString> pathStrings = pathStringRepository
-                .findPathsByQueries(pairs, dto.maxLength());
-        return createPathsStringResponse(pathStrings);
-    }*/
+    @Transactional
+    public List<String> findBestPathsForPairs(MultiPathRequest request) {
+        List<String> results = new ArrayList<>();
+
+        for (PathsSearchRequest pair : request.queries()) {
+            pathStringRepository.findBestPathForPair(
+                    pair.start(),
+                    pair.end()
+            );
+        }
+        results = pathStringRepository.findByPathsString();
+
+        return results;
+    }
 
     public void calculateAllPaths(Long id){
         Board board = boardRepository.findById(id)
@@ -179,7 +194,7 @@ public class PathsStringService {
                 }
             }
         }
-
+        int size = result.size();
         return result;
     }
 
