@@ -1,6 +1,7 @@
 package org.shaporenko.service;
 
 import lombok.RequiredArgsConstructor;
+import org.shaporenko.dto.board.BoardParameters;
 import org.shaporenko.entity.Board;
 import org.shaporenko.repository.BoardRepository;
 import org.shaporenko.util.LinkedList;
@@ -119,6 +120,30 @@ public class GraphService {
         return contacts;
     }
 
+    public Map<Integer, int[]> getCoordinate(BoardParameters board) {
+
+        Integer countVerticalPoints = (int) (board.height() / board.gridPitch());
+        Integer countHorizontalPoints = (int) (board.width() / board.gridPitch());
+
+        List<List<Integer>> contactsPlatform = new ArrayList<>(countVerticalPoints);
+        int number = 0;
+        for (int i=0; i < countVerticalPoints; i++){
+            contactsPlatform.add(new ArrayList<>(countHorizontalPoints));
+            for (int j=0; j < countHorizontalPoints; j++){
+                List<Integer> horizontal = contactsPlatform.get(i);
+                horizontal.add(number++);
+            }
+        }
+
+
+        Map<Integer, int[]> contacts = new HashMap<>();
+        for (int i = 0; i < countVerticalPoints; i++) {
+            for (int j = 0; j < countHorizontalPoints; j++) {
+                contacts.put(contactsPlatform.get(i).get(j), new int[]{i, j});
+            }
+        }
+        return contacts;
+    }
 
     //создание номеров вершин графа
     private List<List<Integer>> createOfContactPlatformNumbers(Board board){

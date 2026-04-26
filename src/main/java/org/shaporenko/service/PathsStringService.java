@@ -50,10 +50,10 @@ public class PathsStringService {
 //    }
 
     @Transactional
-    public List<String> findBestPathsForPairs(MultiPathRequest request) {
+    public List<String> findBestPathsForPairs(List<PathsSearchRequest> request) {
         List<String> results = new ArrayList<>();
 
-        for (PathsSearchRequest pair : request.queries()) {
+        for (PathsSearchRequest pair : request) {
             pathStringRepository.findBestPathForPair(
                     pair.start(),
                     pair.end()

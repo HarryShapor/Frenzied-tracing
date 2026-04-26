@@ -34,7 +34,7 @@ public class PathsStringController {
     }
 
     @GetMapping("/multi-paths")
-    public ResponseEntity<List<String>> getPathsStartToAnd(@RequestBody MultiPathRequest request){
+    public ResponseEntity<List<String>> getPathsStartToAnd(@RequestBody List<PathsSearchRequest> request){
         return ResponseEntity.status(HttpStatus.OK).body(pathsStringService.findBestPathsForPairs(request));
     }
 }
