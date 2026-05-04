@@ -2,16 +2,11 @@ package org.shaporenko.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.shaporenko.dto.paths.MultiPathRequest;
 import org.shaporenko.dto.paths.PathWithTurnInfo;
 import org.shaporenko.dto.paths.PathsResponse;
-import org.shaporenko.dto.paths.PathsSearchRequest;
 import org.shaporenko.entity.Board;
-import org.shaporenko.entity.PathBitmask;
 import org.shaporenko.entity.PathString;
 import org.shaporenko.repository.BoardRepository;
-import org.shaporenko.repository.PathBitmaskRepository;
-import org.shaporenko.repository.PathStringRepository;
 import org.shaporenko.util.LinkedList;
 import org.springframework.stereotype.Service;
 
@@ -24,81 +19,12 @@ import static org.shaporenko.service.SimplePathsFinderService.*;
 @RequiredArgsConstructor
 public class PathsService {
 
-    private final PathBitmaskRepository pathBitmaskRepository;
     private final BoardRepository boardRepository;
     private final GraphService graphService;
 
 
     private final SimplePathsFinderService simplePathsFinderService;
 
-    public PathsResponse getAllPaths(){
-        List<PathBitmask> pathBitmasks = pathBitmaskRepository.findAll();
-        return createPathsResponse(pathBitmasks);
-    }
-
-    public void calculateAllPaths(Long id){
-        Board board = boardRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Не нашлась"));
-
-        Set<List<Integer>> paths = allWays(board);
-
-        calculateAllPaths(paths);
-
-    }
-
-
-    private PathsResponse createPathsResponse(List<PathBitmask> pathBitmasks){
-        Set<List<Integer>> paths = pathBitmasks.stream()
-                .map(entity -> {
-                    List<Integer> path = new ArrayList<>();
-                    byte[] mask = entity.getVertexMask();
-
-                    // Извлекаем вершины из битовой маски
-                    for (int i = 0; i < 25; i++) {
-                        if ((mask[i / 8] & (1 << (i % 8))) != 0) {
-                            path.add(i);
-                        }
-                    }
-
-                    // Сортируем для сохранения порядка (вершины должны идти по порядку)
-                    path.sort(Integer::compareTo);
-                    return path;
-                })
-                .collect(Collectors.toSet());
-
-        return new PathsResponse(paths, paths.size());
-    }
-
-    @Transactional
-    public void calculateAllPaths(
-            Set<List<Integer>> paths) {
-
-        List<PathBitmask> entities = paths.stream()
-                .map(path -> createEntity(path))
-                .collect(Collectors.toList());
-
-        // Массовое сохранение
-        pathBitmaskRepository.saveAll(entities);
-    }
-
-
-    private PathBitmask createEntity(List<Integer> path) {
-        PathBitmask entity = new PathBitmask();
-
-        byte[] byteMask = new byte[(25 + 7) / 8];
-        for (Integer vertex : path) {
-            if (vertex >= 0 && vertex < 25) {
-                byteMask[vertex / 8] |= (1 << (vertex % 8));
-            }
-        }
-
-        entity.setVertexMask(byteMask);
-        entity.setStartVertex(path.getFirst());
-        entity.setEndVertex(path.getLast());
-        entity.setPathLength(path.size());
-
-        return entity;
-    }
 
     private PathString createEntityString(List<Integer> path) {
         PathString entity = new PathString();
