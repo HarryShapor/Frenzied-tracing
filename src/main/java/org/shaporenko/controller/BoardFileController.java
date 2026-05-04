@@ -63,10 +63,10 @@ public class BoardFileController {
 
         // Параметры платы по умолчанию
         BoardParameters defaultParams = new BoardParameters(
-                5.0,      // ширина 100 мм
-                5.0,       // высота 80 мм
-                2,          // 2 слоя
-                1.0,       // шаг сетки 2.54 мм (100 mil)
+                5.0,      // ширина
+                5.0,       // высота
+                1,          // слои
+                1.0,       // шаг сетки мм
                 false       // без диагоналей
         );
 

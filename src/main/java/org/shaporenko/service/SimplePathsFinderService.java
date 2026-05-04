@@ -1,6 +1,8 @@
 package org.shaporenko.service;
 
 import lombok.RequiredArgsConstructor;
+import org.shaporenko.dto.board.BoardCreateDto;
+import org.shaporenko.entity.Board;
 import org.shaporenko.util.LinkedList;
 import org.springframework.stereotype.Service;
 
@@ -11,6 +13,7 @@ import java.util.*;
 public class SimplePathsFinderService {
 
     private final GraphService graphService;
+    private final BoardService boardService;
 
     private void dfsRecurs(int src, int dst, Long id){
 
@@ -81,7 +84,34 @@ public class SimplePathsFinderService {
         return current;
     }
 
-    public Set<List<Integer>> findAllSimplePathsBetweenSourceAndTarget(int source, int target, Long id){
+    private int chooseTheDirectionOfThePath(int current, List<Integer> currentPath,
+                                            Set<int[]> edges, Map<Integer, LinkedList<Integer>> neightboringContacts){
+        boolean flag;
+        System.out.println(current);
+        for (Integer currnetNeighboring : neightboringContacts.get(current)) {
+            flag = false;
+            //цикл по парам рёбер
+            for (int[] edge : edges) {
+                //если ребро с текущим контактом и его соседом есть, то идём дальше
+                if (Arrays.equals(edge, new int[]{current, currnetNeighboring})
+                        || Arrays.equals(edge, new int[]{currnetNeighboring, current})) {
+                    flag = true;
+                }
+            }
+            if (flag) {
+                continue;
+            }
+            //если flag == false и в текущем питу нет текущего контакта
+            if (!flag && !currentPath.contains(currnetNeighboring)) {
+                current = currnetNeighboring;
+                break;
+            }
+        }
+        return current;
+    }
+
+    public Set<List<Integer>> findAllSimplePathsBetweenSourceAndTarget(int source, int target,
+                                                                       Long id){
 
         //инициализация структур данных
         Set<List<Integer>> paths = new HashSet<>();
@@ -126,6 +156,64 @@ public class SimplePathsFinderService {
                 edges.removeIf(i -> i[0] == d);
                 currentPath.remove(currentPath.size() - 1);
                 current = currentPath.get(currentPath.size() - 1);
+            }
+        }
+        return paths;
+    }
+
+    public Set<List<Integer>> findAllSimplePathsBetweenSourceAndTarget(int source, int target,
+                                                                       List<Integer> segment,
+                                                                       Integer sizeSegment){
+
+        //инициализация структур данных
+        Set<List<Integer>> paths = new HashSet<>();
+        List<Integer> currentPath = new ArrayList<>();
+        Set<int[]> edges = new HashSet<>();
+
+        Board board = boardService.createBoard(new BoardCreateDto((double) sizeSegment, (double )sizeSegment,
+                1.0,1,false));
+
+        Map<Integer, LinkedList<Integer>> neightboringContacts
+                = graphService.buildNeighborhoodGraph(board, segment);
+
+        int current = source;
+        int size;
+
+        //Добавление в текущий путь начальную точку
+        currentPath.add(current);
+        while (true) {
+            size = currentPath.size();
+
+            int currentNew = chooseTheDirectionOfThePath(current, currentPath, edges, neightboringContacts);
+            if (current != currentNew) {
+                currentPath.add(currentNew); //добавляем текущий контакт
+                edges.add(new int[]{current, currentNew}); //добавляем ребро с ним
+                current = currentNew;
+            }
+
+            if (current != target && size == currentPath.size()) {
+//              Возврат к вершине ветвления и удаление рёбер после неё
+                if (size == 1) {
+                    break;
+                }
+                int d = currentPath.get(currentPath.size() - 1);
+                currentPath.remove(currentPath.size() - 1);
+                try {
+                    edges.removeIf(i -> i[0] == d);
+                } catch (ConcurrentModificationException e) {
+                }
+                current = currentPath.get(currentPath.size() - 1);
+//                System.out.println("current 1 " + current);
+            }
+
+            if (current == target) {
+                int d = currentPath.get(currentPath.size() - 1);
+                List<Integer> pathLocale = new ArrayList<>(currentPath);
+                paths.add(pathLocale);
+                edges.removeIf(i -> i[0] == d);
+                currentPath.remove(currentPath.size() - 1);
+                current = currentPath.get(currentPath.size() - 1);
+//                System.out.println("current 2 " + current);
             }
         }
         return paths;

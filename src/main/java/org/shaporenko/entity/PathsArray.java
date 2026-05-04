@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -20,7 +22,7 @@ public class PathsArray {
     private Long id;
 
     @Column(name = "path_array", nullable = false)
-    private String path;
+    private List<Integer> path;
 
     @Column(name = "start_vertex", nullable = false)
     private Integer startVertex;

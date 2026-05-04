@@ -38,13 +38,30 @@ public class BoardService {
 
     }
 
+    public Board createBoard(BoardCreateDto boardDto){
+        Integer countVerticalPoints = (int) (boardDto.height() / boardDto.gridPitch());
+        Integer countHorizontalPoints = (int) (boardDto.width() / boardDto.gridPitch());
+        Integer N = (int) (boardDto.height() * boardDto.width()
+                / Math.pow(boardDto.gridPitch(), 2) * boardDto.layers());
+        Board board = new Board();
+        board.setHeight(boardDto.height());
+        board.setWidth(boardDto.width());
+        board.setGridPitch(boardDto.gridPitch());
+        board.setLayers(boardDto.layers());
+        board.setDiagonals(boardDto.diagonals());
+        board.setCountVerticalPoints(countVerticalPoints);
+        board.setCountHorizontalPoints(countHorizontalPoints);
+        board.setN(N);
+        return board;
+    }
+
     public BoardResponse getBoard(Long id){
         return convertToResponse(boardRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));
     }
 
-    private Set<List<Integer>> splitIntoSegments(int sizeSegment, Board board){
-        Set<List<Integer>> segments = new HashSet<>();
+    public List<List<Integer>> splitIntoSegments(int sizeSegment, Board board){
+        List<List<Integer>> segments = new ArrayList<>();
 
         int startingPointOfTheSegment = 0;
         int firstPointInLine = 0;
