@@ -19,10 +19,7 @@ import static org.shaporenko.service.SimplePathsFinderService.*;
 @RequiredArgsConstructor
 public class PathsService {
 
-    private final BoardRepository boardRepository;
     private final GraphService graphService;
-
-
     private final SimplePathsFinderService simplePathsFinderService;
 
 
@@ -32,11 +29,11 @@ public class PathsService {
         String pathString = path.stream()
                 .map(String::valueOf)
                 .collect(Collectors.joining(","));
-        entity.setPathString(pathString);
+        entity.setPath(pathString);
 
         entity.setStartVertex(path.get(0));
         entity.setEndVertex(path.get(path.size() - 1));
-        entity.setPathLength(path.size());
+        entity.setLength(path.size());
 
         return entity;
     }

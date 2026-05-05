@@ -12,10 +12,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "paths_string", indexes = {
-        @Index(name = "idx_start_end", columnList = "startVertex, endVertex"),
-        @Index(name = "idx_bitmask", columnList = "bitmaskHash")
-})
+@Table(name = "paths_string")
 public class PathString {
 
     @Id
@@ -23,7 +20,7 @@ public class PathString {
     private Long id;
 
     @Column(name = "path_string", nullable = false)
-    private String pathString;
+    private String path;
 
     @Column(name = "start_vertex", nullable = false)
     private Integer startVertex;
@@ -32,7 +29,7 @@ public class PathString {
     private Integer endVertex;
 
     @Column(name = "path_length", nullable = false)
-    private Integer pathLength;
+    private Integer length;
 
     @Column(name = "turns")
     private Integer turns;

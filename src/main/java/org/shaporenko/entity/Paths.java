@@ -15,7 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 @Entity
 @Table(name = "paths_array")
-public class PathsArray {
+public class Paths {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,7 +31,7 @@ public class PathsArray {
     private Integer endVertex;
 
     @Column(name = "path_length", nullable = false)
-    private Integer pathLength;
+    private Integer length;
 
     @Column(name = "turns")
     private Integer turns;

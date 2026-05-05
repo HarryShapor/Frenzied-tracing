@@ -3,13 +3,10 @@ package org.shaporenko.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.shaporenko.dto.paths.PathWithTurnInfo;
 import org.shaporenko.dto.paths.PathsArrayDto;
 import org.shaporenko.entity.Board;
-import org.shaporenko.entity.PathString;
-import org.shaporenko.entity.PathsArray;
+import org.shaporenko.entity.Paths;
 import org.shaporenko.repository.BoardRepository;
-import org.shaporenko.repository.PathStringRepository;
 import org.shaporenko.repository.PathsArrayRepository;
 import org.springframework.stereotype.Service;
 
@@ -17,8 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static org.shaporenko.service.SimplePathsFinderService.dfs2;
 
 @Service
 @RequiredArgsConstructor
@@ -32,30 +27,23 @@ public class PathsArrayService {
 
     public void savePaths(Long id, Integer sizeSegment){
 
-        //получить плату
         Board board = boardRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Not found board with id: " + id));
-        //разделить на сегменты и получить их
+
         List<List<Integer>> segments = boardService.splitIntoSegments(sizeSegment, board);
 
-
-        //цикл по сегментами
-        for (int i = 1; i < 3; i++) {
-            //вызывать для каждого сегмента поиск путей
+        for (int i = 1; i < segments.size(); i++) {
             List<PathsArrayDto> dtos = allWays(board, segments.get((i-1)), i, sizeSegment);
 
-            //сохранять в базу
-            calculateAllPaths(dtos);
+            calculateAllPaths(dtos, 5);
         }
     }
 
     @Transactional
     public void calculateAllPaths(
-            List<PathsArrayDto> paths) {
+            List<PathsArrayDto> paths, int maxLength) {
 
-        int maxLength = 5;
-
-        List<PathsArray> entities = paths.stream()
+        List<Paths> entities = paths.stream()
                 .filter(path -> path.turn() < maxLength)
                 .map(this::createEntity)
                 .collect(Collectors.toList());
@@ -63,14 +51,14 @@ public class PathsArrayService {
         pathsArrayRepository.saveAll(entities);
     }
 
-    private PathsArray createEntity(PathsArrayDto dto) {
-        PathsArray entity = new PathsArray();
+    private Paths createEntity(PathsArrayDto dto) {
+        Paths entity = new Paths();
 
         entity.setPath(dto.path());
         entity.setStartVertex(dto.startVertex());
         entity.setEndVertex(dto.endVertex());
 
-        entity.setPathLength(dto.pathLength());
+        entity.setLength(dto.pathLength());
 
         entity.setTurns(dto.turn());
         entity.setNumberSegment(dto.numberSegment());
@@ -99,7 +87,6 @@ public class PathsArrayService {
                 }
             }
         }
-//        int size = result.size();
         return result;
     }
 

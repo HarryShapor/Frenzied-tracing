@@ -77,7 +77,7 @@ public class PathsStringService {
         Set<List<Integer>> paths = pathStrings.stream()
                 .map(entity -> {
                     // Получаем путь из строки "0,1,3,5"
-                    String pathStr = entity.getPathString();
+                    String pathStr = entity.getPath();
                     List<Integer> path = Arrays.stream(pathStr.split(","))
                             .map(String::trim)
                             .filter(s -> !s.isEmpty())
@@ -112,12 +112,12 @@ public class PathsStringService {
         String pathString = path.stream()
                 .map(String::valueOf)
                 .collect(Collectors.joining(","));
-        entity.setPathString(pathString);
+        entity.setPath(pathString);
 
         entity.setStartVertex(path.get(0));
         entity.setEndVertex(path.get(path.size() - 1));
 
-        entity.setPathLength(path.size());
+        entity.setLength(path.size());
 
         entity.setTurns(pathWithTurnInfo.turns());
 
@@ -131,11 +131,11 @@ public class PathsStringService {
         String pathString = path.stream()
                 .map(String::valueOf)
                 .collect(Collectors.joining(","));
-        entity.setPathString(pathString);
+        entity.setPath(pathString);
 
         entity.setStartVertex(path.get(0));
         entity.setEndVertex(path.get(path.size() - 1));
-        entity.setPathLength(path.size());
+        entity.setLength(path.size());
 
         return entity;
     }
