@@ -18,10 +18,10 @@ public class AdjacencyListResponse{
 
     private static List<List<Integer>> convertToList(List<List<Integer>> customList) {
         return customList.stream()
-                .map(linkedList -> {
+                .map(arrayList -> {
                     List<Integer> list = new ArrayList<>();
-                    for (int i = 0; i < linkedList.size(); i++) {
-                        list.add(linkedList.get(i));
+                    for (int i = 0; i < arrayList.size(); i++) {
+                        list.add(arrayList.get(i));
                     }
                     return list;
                 })

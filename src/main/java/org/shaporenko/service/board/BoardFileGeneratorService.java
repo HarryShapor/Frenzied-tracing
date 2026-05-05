@@ -1,8 +1,8 @@
-package org.shaporenko.service;
+package org.shaporenko.service.board;
 
 import lombok.RequiredArgsConstructor;
 import org.shaporenko.dto.board.BoardParameters;
-import org.shaporenko.entity.Board;
+import org.shaporenko.service.GraphService;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -20,12 +20,6 @@ public class BoardFileGeneratorService {
 
     private final GraphService graphService;
 
-    /**
-     * Генерирует .brd файл на основе путей
-     * @param paths список путей в формате "1,2,3,4"
-     * @param parameters параметры платы
-     * @return содержимое .brd файла
-     */
     public String generateBoardFile(List<String> paths, BoardParameters parameters) {
         StringBuilder sb = new StringBuilder();
 

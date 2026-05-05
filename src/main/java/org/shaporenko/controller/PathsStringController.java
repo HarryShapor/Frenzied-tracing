@@ -1,10 +1,9 @@
 package org.shaporenko.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.shaporenko.dto.paths.MultiPathRequest;
 import org.shaporenko.dto.paths.PathsResponse;
 import org.shaporenko.dto.paths.PathsSearchRequest;
-import org.shaporenko.service.PathsStringService;
+import org.shaporenko.service.paths.PathsStringService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

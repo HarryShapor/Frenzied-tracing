@@ -27,10 +27,10 @@ public class GraphService {
 
     private static List<List<Integer>> convertToList(List<List<Integer>> customList) {
         return customList.stream()
-                .map(linkedList -> {
-                    List<Integer> list = new java.util.ArrayList<>();
-                    for (int i = 0; i < linkedList.size(); i++) {
-                        list.add(linkedList.get(i));
+                .map(arrayList -> {
+                    List<Integer> list = new ArrayList<>();
+                    for (int i = 0; i < arrayList.size(); i++) {
+                        list.add(arrayList.get(i));
                     }
                     return list;
                 })
@@ -243,7 +243,6 @@ public class GraphService {
         }
         return contactsPlatform;
     }
-
 
     public List<List<Integer>> matrixToList(
             List<List<Integer>> neighboringContacts, List<List<Integer>> board){

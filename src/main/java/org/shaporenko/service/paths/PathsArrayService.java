@@ -1,4 +1,4 @@
-package org.shaporenko.service;
+package org.shaporenko.service.paths;
 
 
 import jakarta.transaction.Transactional;
@@ -7,7 +7,9 @@ import org.shaporenko.dto.paths.PathsArrayDto;
 import org.shaporenko.entity.Board;
 import org.shaporenko.entity.Paths;
 import org.shaporenko.repository.BoardRepository;
-import org.shaporenko.repository.PathsArrayRepository;
+import org.shaporenko.repository.PathsRepository;
+import org.shaporenko.service.SimplePathsFinderService;
+import org.shaporenko.service.board.BoardService;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -20,7 +22,7 @@ import java.util.stream.Collectors;
 public class PathsArrayService {
 
     private final BoardRepository boardRepository;
-    private final PathsArrayRepository pathsArrayRepository;
+    private final PathsRepository pathsArrayRepository;
     private final SimplePathsFinderService simplePathsFinderService;
     private final BoardService boardService;
 
