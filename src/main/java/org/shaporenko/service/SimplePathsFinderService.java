@@ -15,51 +15,8 @@ public class SimplePathsFinderService {
     private final GraphService graphService;
     private final BoardService boardService;
 
-    private void dfsRecurs(int src, int dst, Long id){
-
-        Set<List<Integer>> paths = new HashSet<>();
-        List<Integer> currentPath = new ArrayList<>();
-        Set<int[]> edges = new HashSet<>();
-
-        List<LinkedList<Integer>> neightboringContacts = graphService.getNeighborhoodGraph(id);
-
-        int p = src;
-        Set<Integer> edge = new HashSet<>();
-        while (true) {
-            currentPath.add(p);
-            if (p == dst) {
-                if (paths.contains(new ArrayList<>(currentPath))){
-                    break;
-                }
-                paths.add(new ArrayList<>(currentPath));
-                currentPath.remove(currentPath.size() - 1);
-                currentPath.clear();
-                p = src;
-            }
-
-            if (p < neightboringContacts.size()) {
-                System.out.println(neightboringContacts.get(p));
-                System.out.println();
-                for (int val : neightboringContacts.get(p)) {
-//                    System.out.println("val - " + val);
-                    edge = new HashSet<>();
-                    edge.add(src);
-                    edge.add(val);
-                    if (!edges.contains(edge)) {
-//                        this.edges.add(edge);
-//                        dfsRecurs(val, dst);
-                        p = val;
-                    }
-                }
-            }
-            edges.remove(edge);
-            currentPath.remove(currentPath.size() - 1);
-        }
-        System.out.println(paths.size());
-    }
-
     private int chooseTheDirectionOfThePath(int current, List<Integer> currentPath,
-                                            Set<int[]> edges, List<LinkedList<Integer>> neightboringContacts){
+                                            Set<int[]> edges, List<List<Integer>> neightboringContacts){
         boolean flag;
 
         for (Integer currnetNeighboring : neightboringContacts.get(current)) {
@@ -85,7 +42,7 @@ public class SimplePathsFinderService {
     }
 
     private int chooseTheDirectionOfThePath(int current, List<Integer> currentPath,
-                                            Set<int[]> edges, Map<Integer, LinkedList<Integer>> neightboringContacts){
+                                            Set<int[]> edges, Map<Integer, List<Integer>> neightboringContacts){
         boolean flag;
         System.out.println(current);
         for (Integer currnetNeighboring : neightboringContacts.get(current)) {
@@ -118,7 +75,7 @@ public class SimplePathsFinderService {
         List<Integer> currentPath = new ArrayList<>();
         Set<int[]> edges = new HashSet<>();
 
-        List<LinkedList<Integer>> neightboringContacts = graphService.getNeighborhoodGraph(id);
+        List<List<Integer>> neightboringContacts = graphService.getNeighborhoodGraph(id);
 
         int current = source;
         int size;
@@ -173,7 +130,7 @@ public class SimplePathsFinderService {
         Board board = boardService.createBoard(new BoardCreateDto((double) sizeSegment, (double )sizeSegment,
                 1.0,1,false));
 
-        Map<Integer, LinkedList<Integer>> neightboringContacts
+        Map<Integer, List<Integer>> neightboringContacts
                 = graphService.buildNeighborhoodGraph(board, segment);
 
         int current = source;
@@ -274,75 +231,5 @@ public class SimplePathsFinderService {
         return routes;
     }
 
-    /*public void dfsIter(int src, int dst){
-        Deque<Pair<Integer, Integer>> stack = new ArrayDeque<>();
-        // Мапа для отслеживания индексов обработанных соседей для каждого узла
-        Map<Integer, Integer> neighborIndices = new HashMap<>();
-
-        // Инициализация начального состояния
-        stack.push(new Pair<>(src, 0));
-        neighborIndices.put(src, 0);
-        this.currentPath.add(src);
-
-        while (!stack.isEmpty()) {
-//            System.out.println(paths);
-            Pair<Integer, Integer> currentState = stack.peek();
-            int currentNode = currentState.getKey();
-            int neighborIndex = currentState.getValue();
-
-            // Если достигли целевой вершины
-            if (currentNode == dst) {
-                this.paths.add(new ArrayList<>(this.currentPath));
-                // Откат назад
-                stack.pop();
-                neighborIndices.remove(currentNode);
-                this.currentPath.remove(this.currentPath.size() - 1);
-                continue;
-            }
-
-            // Получаем список соседей текущего узла
-            List<Integer> neighbors = (currentNode < this.board.size()) ? this.board.get(currentNode) : Collections.emptyList();
-
-            // Если есть еще непроверенные соседи
-            if (neighborIndex < neighbors.size()) {
-                int nextNeighbor = neighbors.get(neighborIndex);
-
-                // Обновляем индекс для текущего узла
-                stack.pop();
-                stack.push(new Pair<>(currentNode, neighborIndex + 1));
-
-                // Проверяем, можно ли пройти по этому ребру
-                Set<Integer> edge = new HashSet<>();
-                edge.add(currentNode);
-                edge.add(nextNeighbor);
-
-                if (!this.edges.contains(edge)) {
-                    // Добавляем ребро и переходим к соседу
-                    this.edges.add(edge);
-                    this.currentPath.add(nextNeighbor);
-                    stack.push(new Pair<>(nextNeighbor, 0));
-                    neighborIndices.put(nextNeighbor, 0);
-                }
-            } else {
-                // Все соседи обработаны - откат назад
-                stack.pop();
-                neighborIndices.remove(currentNode);
-
-                // Удаляем последнее ребро из currentPath
-                if (!this.currentPath.isEmpty()) {
-                    this.currentPath.remove(this.currentPath.size() - 1);
-                }
-
-                // Удаляем ребра, связанные с текущим узлом
-                if (!this.currentPath.isEmpty()) {
-                    int prevNode = this.currentPath.get(this.currentPath.size() - 1);
-                    Set<Integer> edge = new HashSet<>();
-                    edge.add(prevNode);
-                    edge.add(currentNode);
-                    this.edges.remove(edge);
-                }
-            }
-        }
-    }*/
 
 }
