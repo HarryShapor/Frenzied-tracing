@@ -3,7 +3,7 @@ package org.shaporenko.service;
 import lombok.RequiredArgsConstructor;
 import org.shaporenko.dto.board.BoardCreateDto;
 import org.shaporenko.entity.Board;
-import org.shaporenko.util.LinkedList;
+import org.shaporenko.service.board.BoardService;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -176,7 +176,7 @@ public class SimplePathsFinderService {
         return paths;
     }
 
-    public static Set<List<Integer>> dfs2(int src, int dst, List<LinkedList<Integer>> boardList){
+    public static Set<List<Integer>> dfs2(int src, int dst, List<List<Integer>> boardList) {
         Set<List<Integer>> routes = new HashSet<>();
         List<Integer> path = new ArrayList<>();
         Set<int[]> edges = new HashSet<>();
@@ -221,7 +221,6 @@ public class SimplePathsFinderService {
                 int d1 = path.get(path.size() - 1);
                 List<Integer> pathLocale = new ArrayList<>(path);
                 routes.add(pathLocale);
-//                System.out.println(paths.size());
                 edges.removeIf(i -> i[0] == d1);
 
                 path.remove(path.size() - 1);

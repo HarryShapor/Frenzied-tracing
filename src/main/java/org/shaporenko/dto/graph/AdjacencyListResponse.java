@@ -3,8 +3,6 @@ package org.shaporenko.dto.graph;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.shaporenko.util.LinkedList;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -14,16 +12,16 @@ import java.util.stream.Collectors;
 public class AdjacencyListResponse{
     private List<List<Integer>> adjacencyList;
 
-    public AdjacencyListResponse(List<LinkedList<Integer>> customList) {
+    public AdjacencyListResponse(List<List<Integer>> customList) {
         this.adjacencyList = convertToList(customList);
     }
 
-    private static List<List<Integer>> convertToList(List<LinkedList<Integer>> customList) {
+    private static List<List<Integer>> convertToList(List<List<Integer>> customList) {
         return customList.stream()
                 .map(linkedList -> {
                     List<Integer> list = new ArrayList<>();
-                    for (int i = 0; i < linkedList.length; i++) {
-                        list.add(linkedList.ret(i));
+                    for (int i = 0; i < linkedList.size(); i++) {
+                        list.add(linkedList.get(i));
                     }
                     return list;
                 })

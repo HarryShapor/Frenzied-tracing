@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.shaporenko.dto.board.BoardParameters;
 import org.shaporenko.entity.Board;
 import org.shaporenko.repository.BoardRepository;
-import org.shaporenko.util.LinkedList;
 import org.shaporenko.util.NeighborhoodUtils;
 import org.springframework.stereotype.Service;
 
@@ -26,12 +25,12 @@ public class GraphService {
                 .orElseThrow(() -> new RuntimeException("")));
     }
 
-    private static List<List<Integer>> convertToList(List<LinkedList<Integer>> customList) {
+    private static List<List<Integer>> convertToList(List<List<Integer>> customList) {
         return customList.stream()
                 .map(linkedList -> {
                     List<Integer> list = new java.util.ArrayList<>();
-                    for (int i = 0; i < linkedList.length; i++) {
-                        list.add(linkedList.ret(i));
+                    for (int i = 0; i < linkedList.size(); i++) {
+                        list.add(linkedList.get(i));
                     }
                     return list;
                 })
@@ -246,8 +245,8 @@ public class GraphService {
     }
 
 
-    public List<LinkedList<Integer>> matrixToList(
-            List<LinkedList<Integer>> neighboringContacts, List<List<Integer>> board){
+    public List<List<Integer>> matrixToList(
+            List<List<Integer>> neighboringContacts, List<List<Integer>> board){
 
         if (neighboringContacts != null){
             throw new NullPointerException("NeighboringContacts in null");
@@ -255,14 +254,14 @@ public class GraphService {
         int n = board.size();
         neighboringContacts = new ArrayList<>();
         for (int i =0; i <n; i++){
-            neighboringContacts.add(i, new LinkedList<Integer>());
+            neighboringContacts.add(i, new ArrayList<>());
         }
         int count = 0;
         for (int i = 0; i < n; i++){
             for (int j = 0; j < n; j ++){
                 double arcWeight = board.get(i).get(j);
                 if (arcWeight == 1){
-                    neighboringContacts.get(i).ins(j);
+                    neighboringContacts.get(i).add(j);
                     count++;
                 }
             }
