@@ -20,7 +20,7 @@ public class GraphService {
 
     private final BoardRepository boardRepository;
 
-    public List<LinkedList<Integer>> getNeighborhoodGraph(Long id){
+    public List<List<Integer>> getNeighborhoodGraph(Long id){
 
         return buildNeighborhoodGraph(boardRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("")));
@@ -38,7 +38,7 @@ public class GraphService {
                 .collect(Collectors.toList());
     }
 
-    public List<LinkedList<Integer>> buildNeighborhoodGraph(
+    public List<List<Integer>> buildNeighborhoodGraph(
             Board board){
 
         //создание печатной платы
@@ -51,7 +51,7 @@ public class GraphService {
         Map<Integer, int[]> contacts = this.setTheCoordinatesOfContactPads(printedCircuitBoard, board);
 
         //создание списков смежности контактов
-        List<LinkedList<Integer>> neighboringContacts = initializationOfNeighboringContacts(board);
+        List<List<Integer>> neighboringContacts = initializationOfNeighboringContacts(board);
 
         //определение соседей контактных площадок
         neighboringContacts = determiningTheNeighborsOfContactSites(contacts, printedCircuitBoard,
@@ -60,7 +60,7 @@ public class GraphService {
         return neighboringContacts;
     }
 
-    public Map<Integer, LinkedList<Integer>> buildNeighborhoodGraph(
+    public Map<Integer, List<Integer>> buildNeighborhoodGraph(
             Board board, List<Integer> segment){
 
         //создание печатной платы
@@ -70,7 +70,7 @@ public class GraphService {
         Map<Integer, int[]> contacts = this.setTheCoordinatesOfContactPads(printedCircuitBoard, board);
 
         //создание списков смежности контактов
-        Map<Integer, LinkedList<Integer>> neighboringContacts = initializationOfNeighboringContacts(board, segment);
+        Map<Integer, List<Integer>> neighboringContacts = initializationOfNeighboringContacts(board, segment);
 
         //определение соседей контактных площадок
         neighboringContacts = determiningTheNeighborsOfContactSites(contacts, printedCircuitBoard,
@@ -79,48 +79,49 @@ public class GraphService {
         return neighboringContacts;
     }
 
-    private Map<Integer, LinkedList<Integer>> initializationOfNeighboringContacts(
+    private Map<Integer, List<Integer>> initializationOfNeighboringContacts(
             Board board, List<Integer> segment){
-        Map<Integer, LinkedList<Integer>> neighboringContacts = new HashMap<>();
+        Map<Integer, List<Integer>> neighboringContacts = new HashMap<>();
 
         for (int i = 0; i < board.getLayers() * board.getN(); i++){
-            neighboringContacts.put(segment.get(i), new LinkedList<>());
+            neighboringContacts.put(segment.get(i), new ArrayList<>());
         }
 
         return neighboringContacts;
     }
 
-    private List<LinkedList<Integer>> initializationOfNeighboringContacts(
+    private List<List<Integer>> initializationOfNeighboringContacts(
             Board board){
-        List<LinkedList<Integer>> neighboringContacts = new ArrayList<>();
+        List<List<Integer>> neighboringContacts = new ArrayList<>();
 
         for (int i = 0; i < board.getLayers() * board.getN(); i++){
-            neighboringContacts.add(i, new LinkedList<>());
+            neighboringContacts.add(i, new ArrayList<>());
         }
 
         return neighboringContacts;
     }
 
-    private List<LinkedList<Integer>> determiningTheNeighborsOfContactSites(
+    private List<List<Integer>> determiningTheNeighborsOfContactSites(
             Map<Integer, int[]> points, List<List<Integer>> printedCircuitBoard, Board board,
-            List<LinkedList<Integer>> neighboringContacts){
+            List<List<Integer>> neighboringContacts){
+
         int contactFieldNumber = board.getN() / board.getLayers();
         for (int l = 0; l < board.getLayers(); l++) {
             for (int n = 0; n < contactFieldNumber; n++) {
                 int el = n + contactFieldNumber *l;
-                LinkedList<Integer> boardN = neighboringContacts.get(el);
+                List<Integer> boardN = neighboringContacts.get(el);
                 for (int i = 0; i < board.getCountVerticalPoints(); i++) {
                     for (int j = 0; j < board.getCountHorizontalPoints(); j++) {
                         if (board.getDiagonals()) {
                             if (NeighborhoodUtils.areDiagonalNeighbors(i, j, points.get(n)[0],
                                     points.get(n)[1])) {
-                                boardN.ins(printedCircuitBoard.get(i).get(j) + contactFieldNumber * l);
+                                boardN.add(printedCircuitBoard.get(i).get(j) + contactFieldNumber * l);
                             }
                         }
                         else {
                             if (NeighborhoodUtils.areOrthogonalNeighbors(i, j, points.get(n)[0],
                                     points.get(n)[1])) {
-                                boardN.ins(printedCircuitBoard.get(i).get(j)+contactFieldNumber*l);
+                                boardN.add(printedCircuitBoard.get(i).get(j)+contactFieldNumber*l);
                             }
                         }
                     }
@@ -128,10 +129,10 @@ public class GraphService {
                 int down = el + board.getCountHorizontalPoints() * board.getCountVerticalPoints();
                 int up = el - board.getCountVerticalPoints() * board.getCountHorizontalPoints();
                 if (up >= 0 && up < contactFieldNumber * board.getLayers()) {
-                    boardN.ins(up);
+                    boardN.add(up);
                 }
                 if (down >= 0 && down < contactFieldNumber*board.getLayers()) {
-                    boardN.ins(down);
+                    boardN.add(down);
                 }
             }
         }
@@ -140,26 +141,27 @@ public class GraphService {
 
     //определение соседства
     //возможно segment не нужен и можно упростить
-    private Map<Integer, LinkedList<Integer>> determiningTheNeighborsOfContactSites(
+    private Map<Integer, List<Integer>> determiningTheNeighborsOfContactSites(
             Map<Integer, int[]> points, List<List<Integer>> printedCircuitBoard, Board board,
-            Map<Integer, LinkedList<Integer>> neighboringContacts, List<Integer> segment){
+            Map<Integer, List<Integer>> neighboringContacts, List<Integer> segment){
+
         int contactFieldNumber = board.getN() / board.getLayers();
         for (int l = 0; l < board.getLayers(); l++) {
             for (int n = 0; n < contactFieldNumber; n++) {
                 int el = n + contactFieldNumber *l;
-                LinkedList<Integer> boardN = neighboringContacts.get(segment.get(el));
+                List<Integer> boardN = neighboringContacts.get(segment.get(el));
                 for (int i = 0; i < board.getCountVerticalPoints(); i++) {
                     for (int j = 0; j < board.getCountHorizontalPoints(); j++) {
                         if (board.getDiagonals()) {
                             if (NeighborhoodUtils.areDiagonalNeighbors(i, j, points.get(segment.get(n))[0],
                                     points.get(segment.get(n))[1])) {
-                                boardN.ins(printedCircuitBoard.get(i).get(j) + contactFieldNumber * l);
+                                boardN.add(printedCircuitBoard.get(i).get(j) + contactFieldNumber * l);
                             }
                         }
                         else {
                             if (NeighborhoodUtils.areOrthogonalNeighbors(i, j, points.get(segment.get(n))[0],
                                     points.get(segment.get(n))[1])) {
-                                boardN.ins(printedCircuitBoard.get(i).get(j)+contactFieldNumber*l);
+                                boardN.add(printedCircuitBoard.get(i).get(j)+contactFieldNumber*l);
                             }
                         }
                     }
@@ -167,10 +169,10 @@ public class GraphService {
                 int down = el + board.getCountHorizontalPoints() * board.getCountVerticalPoints();
                 int up = el - board.getCountVerticalPoints() * board.getCountHorizontalPoints();
                 if (up >= 0 && up < contactFieldNumber * board.getLayers()) {
-                    boardN.ins(up);
+                    boardN.add(up);
                 }
                 if (down >= 0 && down < contactFieldNumber*board.getLayers()) {
-                    boardN.ins(down);
+                    boardN.add(down);
                 }
             }
         }
@@ -243,109 +245,6 @@ public class GraphService {
         return contactsPlatform;
     }
 
-    /**
-     * Метод принимающий параметры высоты, ширины, шага сетки платы, количество слоёв и
-     * параметр diagonals, который при значении true учитывает диагональный контакты,
-     * как соседние
-     * */
-    //недоделана
-    private void adjacencyMatrix(List<List<Integer>> matrix, Board board){
-
-        List<List<Integer>> printedCircuitBoard = createOfContactPlatformNumbers(board);
-
-        Map<Integer, int[]> contacts = setTheCoordinatesOfContactPads(printedCircuitBoard, board);
-
-//        System.out.println(points.size());
-//        for (int i=0; i < points.size(); i++){
-//            System.out.println(Arrays.toString(points.get(i)));
-//        }
-        //вывод номеров контактов
-//        for (int i = 0; i < countVerticalPoints; i++){
-//            for (int j = 0; j < countHorizontalPoints; j++){
-//                System.out.print(boardMatrix[i][j] + ", ");
-//            }
-//            System.out.println();
-//        }
-        //Формирования матрицы смежности
-        matrix = new ArrayList<>();
-        for (int i = 0; i < board.getN() * board.getLayers(); i++){
-            matrix.add(i, new ArrayList<>());
-            for (int j=0; j < board.getN()*board.getLayers(); j++){
-                matrix.get(i).add(0);
-            }
-        }
-
-        //создание матрицы смежности
-/*        for (int n = 0; n < number; n++) {
-//            System.out.println("number - " + n);
-            List<Integer> boardN = this.board.get(n);
-            for (int i = 0; i < countVerticalPoints; i++) {
-                for (int j = 0; j < countHorizontalPoints; j++) {
-//                    System.out.println(i + " - i " + j + " - j " +
-//                            (points.get(i)[0]) + " - in " + (points.get(i)[1]) + " - jn" +
-//                            " i-in = " + (i - points.get(n)[0])
-//                            + " j-jn = " + (j - points.get(n)[1]) + " number - " + boardMatrix[i][j]);
-//                    System.out.println("Сумма - " + Math.abs((i - points.get(n)[0]) + (j - points.get(n)[1])));
-                    if (neighbors(i,j, points.get(n)[0], points.get(n)[1])){
-                        boardN.add(boardMatrix[i][j], 1);
-                    }
-                    else {
-                        boardN.add(boardMatrix[i][j], 0);
-                    }
-                }
-//                System.out.println();
-            }
-        }*/
-
-        for (int l = 0; l < board.getLayers(); l++) {
-            for (int n = 0; n < board.getN(); n++) {
-                int el = n + board.getN() * l;
-                List<Integer> boardN = matrix.get(el);
-//                    System.out.println(el);
-                for (int i = 0; i < board.getCountVerticalPoints(); i++) {
-                    for (int j = 0; j < board.getCountHorizontalPoints(); j++) {
-                        if (!board.getDiagonals()){
-                            if (NeighborhoodUtils.areOrthogonalNeighbors(i, j, contacts.get(n)[0], contacts.get(n)[1])) {
-                                boardN.remove(printedCircuitBoard.get(i).get(j)+board.getN() * l);
-                                boardN.add(printedCircuitBoard.get(i).get(j)+board.getN() * l, 1);
-                            } /*else {
-//                                System.out.println("i, j - " + i + ", " + j);
-                                boardN.add(boardMatrix[i][j]*(l+1), 0);
-                            }*/
-                        }
-                        else {
-                            if (NeighborhoodUtils.areDiagonalNeighbors(i, j, contacts.get(n)[0], contacts.get(n)[1])) {
-                                boardN.remove(printedCircuitBoard.get(i).get(j)+board.getN()*l);
-                                boardN.add(printedCircuitBoard.get(i).get(j)+board.getN()*l, 1);
-                            }/* else {
-                                boardN.add(boardMatrix[i][j], 0);
-                            }*/
-                        }
-                    }
-                }
-                try {
-                    boardN.remove(el + board.getCountHorizontalPoints() *
-                            board.getCountVerticalPoints());
-                    boardN.add(el + board.getCountHorizontalPoints() *
-                            board.getCountVerticalPoints(), 1);
-                }
-                catch (IndexOutOfBoundsException e){
-
-                }
-                try {
-                    boardN.remove(el - board.getCountHorizontalPoints() *
-                            board.getCountVerticalPoints());
-                    boardN.add(el - board.getCountHorizontalPoints() *
-                            board.getCountVerticalPoints(), 1);
-                }
-                catch (IndexOutOfBoundsException e){
-
-                }
-            }
-//            System.out.println("Количество единиц - " + count);
-        }
-
-    }
 
     public List<LinkedList<Integer>> matrixToList(
             List<LinkedList<Integer>> neighboringContacts, List<List<Integer>> board){

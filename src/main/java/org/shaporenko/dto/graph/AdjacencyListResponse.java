@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.shaporenko.util.LinkedList;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 @Getter
@@ -20,7 +21,7 @@ public class AdjacencyListResponse{
     private static List<List<Integer>> convertToList(List<LinkedList<Integer>> customList) {
         return customList.stream()
                 .map(linkedList -> {
-                    List<Integer> list = new java.util.ArrayList<>();
+                    List<Integer> list = new ArrayList<>();
                     for (int i = 0; i < linkedList.length; i++) {
                         list.add(linkedList.ret(i));
                     }
