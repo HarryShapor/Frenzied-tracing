@@ -8,6 +8,7 @@ import org.shaporenko.entity.Board;
 import org.shaporenko.entity.Paths;
 import org.shaporenko.repository.BoardRepository;
 import org.shaporenko.repository.PathsRepository;
+import org.shaporenko.service.SegmentService;
 import org.shaporenko.service.SimplePathsFinderService;
 import org.shaporenko.service.board.BoardService;
 import org.springframework.stereotype.Service;
@@ -24,7 +25,7 @@ public class PathsArrayService {
     private final BoardRepository boardRepository;
     private final PathsRepository pathsArrayRepository;
     private final SimplePathsFinderService simplePathsFinderService;
-    private final BoardService boardService;
+    private final SegmentService segmentService;
 
 
     public void savePaths(Long id, Integer sizeSegment){
@@ -32,13 +33,20 @@ public class PathsArrayService {
         Board board = boardRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Not found board with id: " + id));
 
-        List<List<Integer>> segments = boardService.splitIntoSegments(sizeSegment, board);
-
-        for (int i = 1; i < segments.size(); i++) {
-            List<PathsArrayDto> dtos = allWays(board, segments.get((i-1)), i, sizeSegment);
-
-            calculateAllPaths(dtos, 5);
+//        List<List<Integer>> segments = boardService.splitIntoSegments(sizeSegment, board);
+//
+//        for (int i = 1; i < segments.size(); i++) {
+//            List<PathsArrayDto> dtos = allWays(board, segments.get((i-1)), i, sizeSegment);
+//
+//            calculateAllPaths(dtos, 5);
+//        }
+        if (board.getN() > 25){
+            segmentService.split(board, sizeSegment);
         }
+        else {
+            //обычный расчёт
+        }
+
     }
 
     @Transactional
@@ -82,7 +90,7 @@ public class PathsArrayService {
                     for (List<Integer> route : routes) {
                         int turns = calculateTurns(route, board);
                         PathsArrayDto dto = new PathsArrayDto(route, route.getFirst(),
-                                route.getLast(), route.size(), turns, numberSegment);
+                                route.getLast(), route.size(), turns, numberSegment, 0);
                         result.add(dto);
 
                     }

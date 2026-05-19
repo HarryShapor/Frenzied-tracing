@@ -44,7 +44,7 @@ public class SimplePathsFinderService {
     private int chooseTheDirectionOfThePath(int current, List<Integer> currentPath,
                                             Set<int[]> edges, Map<Integer, List<Integer>> neightboringContacts){
         boolean flag;
-        System.out.println(current);
+//        System.out.println(current);
         for (Integer currnetNeighboring : neightboringContacts.get(current)) {
             flag = false;
             //цикл по парам рёбер
@@ -127,7 +127,22 @@ public class SimplePathsFinderService {
         List<Integer> currentPath = new ArrayList<>();
         Set<int[]> edges = new HashSet<>();
 
-        Board board = boardService.createBoard(new BoardCreateDto((double) sizeSegment, (double )sizeSegment,
+        Double width = 0d;
+        for (int i = 0; i < segment.size(); i++){
+            width++;
+            try {
+                if (segment.get(i+1) - segment.get(i) != 1){
+                    break;
+                }
+            }
+            catch (IndexOutOfBoundsException e){
+                width = (double) segment.size() / 2;
+            }
+        }
+
+        Double height = segment.size() / width;
+
+        Board board = boardService.createBoard(new BoardCreateDto(height, width,
                 1.0,1,false));
 
         Map<Integer, List<Integer>> neightboringContacts

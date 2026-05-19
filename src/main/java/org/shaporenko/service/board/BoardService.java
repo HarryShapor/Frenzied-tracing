@@ -1,11 +1,10 @@
-package org.shaporenko.service;
+package org.shaporenko.service.board;
 
 import lombok.RequiredArgsConstructor;
 import org.shaporenko.dto.board.BoardCreateDto;
 import org.shaporenko.dto.board.BoardResponse;
 import org.shaporenko.entity.Board;
 import org.shaporenko.repository.BoardRepository;
-import org.shaporenko.util.LinkedList;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -20,29 +19,19 @@ public class BoardService {
 
     public BoardResponse saveBoard(BoardCreateDto boardDto){
 
-        Integer countVerticalPoints = (int) (boardDto.height() / boardDto.gridPitch());
-        Integer countHorizontalPoints = (int) (boardDto.width() / boardDto.gridPitch());
-        Integer N = (int) (boardDto.height() * boardDto.width()
-                        / Math.pow(boardDto.gridPitch(), 2) * boardDto.layers());
-        Board board = new Board();
-        board.setHeight(boardDto.height());
-        board.setWidth(boardDto.width());
-        board.setGridPitch(boardDto.gridPitch());
-        board.setLayers(boardDto.layers());
-        board.setDiagonals(boardDto.diagonals());
-        board.setCountVerticalPoints(countVerticalPoints);
-        board.setCountHorizontalPoints(countHorizontalPoints);
-        board.setN(N);
+        Board board = this.createBoard(boardDto);
 
         return convertToResponse(boardRepository.save(board));
 
     }
 
     public Board createBoard(BoardCreateDto boardDto){
+
         Integer countVerticalPoints = (int) (boardDto.height() / boardDto.gridPitch());
         Integer countHorizontalPoints = (int) (boardDto.width() / boardDto.gridPitch());
         Integer N = (int) (boardDto.height() * boardDto.width()
                 / Math.pow(boardDto.gridPitch(), 2) * boardDto.layers());
+
         Board board = new Board();
         board.setHeight(boardDto.height());
         board.setWidth(boardDto.width());
@@ -52,6 +41,7 @@ public class BoardService {
         board.setCountVerticalPoints(countVerticalPoints);
         board.setCountHorizontalPoints(countHorizontalPoints);
         board.setN(N);
+
         return board;
     }
 
@@ -60,6 +50,7 @@ public class BoardService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));
     }
 
+    //перенести в отдельный сервис, который будет делить на сегменты
     public List<List<Integer>> splitIntoSegments(int sizeSegment, Board board){
         List<List<Integer>> segments = new ArrayList<>();
 
@@ -93,15 +84,12 @@ public class BoardService {
             segments.add(segment);
         }
 
-//        for (List<Integer> segment : segments){
-//            System.out.println(segment);
-//        }
-
         return segments;
     }
 
+    //преобразовать в mapper
     private BoardResponse convertToResponse(Board board){
-        return new BoardResponse(board.getHeight(), board.getWidth(), board.getGridPitch(),
+        return new BoardResponse(board.getId(), board.getHeight(), board.getWidth(), board.getGridPitch(),
                 board.getLayers(), board.getDiagonals(),
                 board.getCountVerticalPoints(), board.getCountHorizontalPoints(), board.getN());
     }

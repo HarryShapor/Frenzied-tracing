@@ -9,5 +9,6 @@ public record PathsArrayDto(
     Integer endVertex,
     Integer pathLength,
     Integer turn,
-    Integer numberSegment) {
+    Integer numberSegment,
+    Integer level) {
 }

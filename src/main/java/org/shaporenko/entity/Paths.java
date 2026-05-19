@@ -39,4 +39,6 @@ public class Paths {
     @Column(name = "number_segment")
     private Integer numberSegment;
 
+    @Column(name = "level_")
+    private Integer level;
 }

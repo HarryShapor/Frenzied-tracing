@@ -1,6 +1,7 @@
 package org.shaporenko.dto.board;
 
 public record BoardResponse(
+    Long id,
     Double height,
     Double width,
     Double gridPitch,
