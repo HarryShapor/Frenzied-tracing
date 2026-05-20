@@ -6,7 +6,7 @@ import org.shaporenko.dto.board.BoardParameters;
 import org.shaporenko.dto.board.GenerateBoardRequest;
 import org.shaporenko.dto.paths.MultiPathRequest;
 import org.shaporenko.service.board.BoardFileGeneratorService;
-import org.shaporenko.service.paths.PathsStringService;
+import org.shaporenko.service.paths.PathsArrayService;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -22,7 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BoardFileController {
 
-    private final PathsStringService pathsStringService;
+    private final PathsArrayService pathsArrayService;
     private final BoardFileGeneratorService fileGeneratorService;
 
     @PostMapping("/generate")
@@ -32,7 +32,7 @@ public class BoardFileController {
 //        log.info("Generating board file for {} paths", request.paths().size());
 
         // Получаем пути (если нужно - вызываем сервис для поиска)
-        List<String> paths =  pathsStringService.findBestPathsForPairs(request.queries());
+        List<String> paths =  pathsArrayService.findBestPathsForPairs(request.queries());
 
         // Генерируем содержимое файла
         String fileContent = fileGeneratorService.generateBoardFile(
@@ -59,7 +59,7 @@ public class BoardFileController {
     @PostMapping("/export")
     public ResponseEntity<ByteArrayResource> exportPaths(@RequestBody MultiPathRequest request) {
         // Получаем лучшие пути для каждой пары
-        List<String> paths = pathsStringService.findBestPathsForPairs(request.queries());
+        List<String> paths = pathsArrayService.findBestPathsForPairs(request.queries());
 
         // Параметры платы по умолчанию
         BoardParameters defaultParams = new BoardParameters(

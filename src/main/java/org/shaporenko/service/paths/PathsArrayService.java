@@ -3,14 +3,17 @@ package org.shaporenko.service.paths;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.shaporenko.dto.paths.PathResult;
 import org.shaporenko.dto.paths.PathsArrayDto;
+import org.shaporenko.dto.paths.PathsSearchRequest;
 import org.shaporenko.entity.Board;
 import org.shaporenko.entity.Paths;
 import org.shaporenko.repository.BoardRepository;
+import org.shaporenko.repository.PathsProcedureRepository;
 import org.shaporenko.repository.PathsRepository;
 import org.shaporenko.service.SegmentService;
 import org.shaporenko.service.SimplePathsFinderService;
-import org.shaporenko.service.board.BoardService;
+import org.shaporenko.service.board.BoardFileGeneratorService;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -24,9 +27,45 @@ public class PathsArrayService {
 
     private final BoardRepository boardRepository;
     private final PathsRepository pathsArrayRepository;
+    private final PathsProcedureRepository pathsProcedureRepository;
     private final SimplePathsFinderService simplePathsFinderService;
     private final SegmentService segmentService;
+    private final BoardFileGeneratorService boardFileGeneratorService;
 
+
+    @Transactional
+    public List<PathResult> findPathsForContactPadPairs(List<PathsSearchRequest> pairs) {
+        pathsProcedureRepository.clearResults();
+
+        for (PathsSearchRequest pair : pairs) {
+            pathsProcedureRepository.findAndSavePath(pair.start(), pair.end());
+        }
+
+        return pathsProcedureRepository.findAllFromResults();
+    }
+
+    @Transactional
+    public List<String> findBestPathsForPairs(List<PathsSearchRequest> pairs) {
+        return findPathsForContactPadPairs(pairs).stream()
+                .filter(path -> !path.path().isEmpty())
+                .map(this::pathToString)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public String generateBrdForBoard(Long boardId, List<PathsSearchRequest> pairs) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new RuntimeException("Not found board with id: " + boardId));
+
+        List<String> paths = findBestPathsForPairs(pairs);
+        return boardFileGeneratorService.generateBoardFile(paths, board);
+    }
+
+    private String pathToString(PathResult pathResult) {
+        return pathResult.path().stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(","));
+    }
 
     public void savePaths(Long id, Integer sizeSegment){
 

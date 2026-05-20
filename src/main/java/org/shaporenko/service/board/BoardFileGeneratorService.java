@@ -1,50 +1,113 @@
 package org.shaporenko.service.board;
 
-import lombok.RequiredArgsConstructor;
 import org.shaporenko.dto.board.BoardParameters;
-import org.shaporenko.service.GraphService;
+import org.shaporenko.entity.Board;
+import org.shaporenko.util.BrdCoordinateConverter;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 public class BoardFileGeneratorService {
 
-    private static final double INCH_TO_MM = 25.4;
-    private static final double INTERNAL_UNIT = 0.000100; // INCH
-    private static final double TRACK_WIDTH = 80; // в internal units
-    private static final double CLEARANCE = 100;
+    private static final int TRACK_WIDTH = 197;
+    private static final int CLEARANCE = 118;
+    private static final int EDGE_WIDTH = 150;
 
-    private final GraphService graphService;
+    /** Формат De для сегмента дорожки (как в Primer9.brd). */
+    private static final String TRACK_DE = "De 15 0 2 0 0";
+    private static final String EDGE_DE = "De 28 0 900 0 0";
+
+    public String generateBoardFile(List<String> paths, Board board) {
+        BoardParameters parameters = toBoardParameters(board);
+        Map<Integer, long[]> vertexCoordinates = BrdCoordinateConverter.vertexToBrdCoordinates(board);
+
+        List<TrackSegment> trackSegments = buildTrackSegments(paths, vertexCoordinates);
+        if (trackSegments.isEmpty()) {
+            throw new IllegalStateException(
+                    "Нет трасс для экспорта: results пуст или пути не содержат сегментов"
+            );
+        }
+
+        long originX = BrdCoordinateConverter.BOARD_ORIGIN_X;
+        long originY = BrdCoordinateConverter.BOARD_ORIGIN_Y;
+        long boardWidth = BrdCoordinateConverter.mmToInternalUnits(board.getWidth());
+        long boardHeight = BrdCoordinateConverter.mmToInternalUnits(board.getHeight());
+        long boardRight = originX + boardWidth;
+        long boardBottom = originY + boardHeight;
+
+        int trackCount = trackSegments.size();
+        int drawCount = 4;
+
+        StringBuilder sb = new StringBuilder();
+        addHeader(sb);
+        addGeneralSection(sb, parameters, drawCount, trackCount);
+        addSheetDescrSection(sb);
+        addSetupSection(sb, parameters);
+        addEquipotSection(sb);
+        addNClassSection(sb);
+        addBoardOutline(sb, originX, originY, boardRight, boardBottom);
+        addTracksSection(sb, trackSegments);
+        addFooter(sb);
+        return sb.toString();
+    }
 
     public String generateBoardFile(List<String> paths, BoardParameters parameters) {
-        StringBuilder sb = new StringBuilder();
+        return generateBoardFile(paths, boardFromParameters(parameters));
+    }
 
-        // Заголовок файла
-        addHeader(sb);
+    private List<TrackSegment> buildTrackSegments(List<String> paths, Map<Integer, long[]> vertexCoordinates) {
+        List<TrackSegment> segments = new ArrayList<>();
 
-        // Общие параметры
-        addGeneralSection(sb, parameters);
+        for (String pathStr : paths) {
+            if (pathStr == null || pathStr.isEmpty()) {
+                continue;
+            }
 
-        // Настройки
-        addSetupSection(sb);
+            List<Integer> vertices = parsePath(pathStr);
+            if (vertices.size() < 2) {
+                continue;
+            }
 
-        // Электрические соединения
-        addEquipotSection(sb);
+            for (int i = 0; i < vertices.size() - 1; i++) {
+                long[] fromCoord = requireCoordinates(vertexCoordinates, vertices.get(i));
+                long[] toCoord = requireCoordinates(vertexCoordinates, vertices.get(i + 1));
+                segments.add(new TrackSegment(
+                        fromCoord[0], fromCoord[1], toCoord[0], toCoord[1]
+                ));
+            }
+        }
+        return segments;
+    }
 
-        // Классы цепей
-        addNClassSection(sb);
+    private Board boardFromParameters(BoardParameters parameters) {
+        int countVerticalPoints = (int) (parameters.height() / parameters.gridPitch());
+        int countHorizontalPoints = (int) (parameters.width() / parameters.gridPitch());
 
-        // Дорожки (трассы)
-        addTracksSection(sb, paths, parameters);
+        Board board = new Board();
+        board.setWidth(parameters.width());
+        board.setHeight(parameters.height());
+        board.setGridPitch(parameters.gridPitch());
+        board.setLayers(parameters.layers());
+        board.setDiagonals(parameters.diagonals());
+        board.setCountVerticalPoints(countVerticalPoints);
+        board.setCountHorizontalPoints(countHorizontalPoints);
+        board.setN(countVerticalPoints * countHorizontalPoints * Math.max(parameters.layers(), 1));
+        return board;
+    }
 
-        // Завершение файла
-        addFooter(sb);
-
-        return sb.toString();
+    private BoardParameters toBoardParameters(Board board) {
+        return new BoardParameters(
+                board.getWidth(),
+                board.getHeight(),
+                board.getLayers(),
+                board.getGridPitch(),
+                board.getDiagonals()
+        );
     }
 
     private void addHeader(StringBuilder sb) {
@@ -57,22 +120,29 @@ public class BoardFileGeneratorService {
         sb.append("\n");
     }
 
-    private void addGeneralSection(StringBuilder sb, BoardParameters params) {
+    private void addGeneralSection(StringBuilder sb, BoardParameters params, int drawCount, int trackCount) {
+        int layerCount = Math.max(params.layers(), 2);
+
         sb.append("$GENERAL\n");
         sb.append("encoding utf-8\n");
-        sb.append("LayerCount ").append(params.layers()).append("\n");
-        sb.append("Ly 1FFF8001\n");
-        sb.append("EnabledLayers 1FFF8001\n");
+        sb.append("LayerCount ").append(layerCount).append("\n");
+        sb.append("Ly 1FFF8007\n");
+        sb.append("EnabledLayers 1FFF8007\n");
         sb.append("Links 0\n");
         sb.append("NoConn 0\n");
 
-        // Размеры платы (в internal units)
-        double widthInUnits = params.width() / INCH_TO_MM / INTERNAL_UNIT;
-        double heightInUnits = params.height() / INCH_TO_MM / INTERNAL_UNIT;
-        sb.append(String.format("Di 353 353 %.0f %.0f\n", widthInUnits, heightInUnits));
+        double widthInUnits = params.width() / BrdCoordinateConverter.INCH_TO_MM / BrdCoordinateConverter.INTERNAL_UNIT_INCH;
+        double heightInUnits = params.height() / BrdCoordinateConverter.INCH_TO_MM / BrdCoordinateConverter.INTERNAL_UNIT_INCH;
+        sb.append(String.format(
+                "Di %d %d %.0f %.0f\n",
+                BrdCoordinateConverter.BOARD_ORIGIN_X,
+                BrdCoordinateConverter.BOARD_ORIGIN_Y,
+                BrdCoordinateConverter.BOARD_ORIGIN_X + widthInUnits,
+                BrdCoordinateConverter.BOARD_ORIGIN_Y + heightInUnits
+        ));
 
-        sb.append("Ndraw 0\n");
-        sb.append("Ntrack 1\n");
+        sb.append("Ndraw ").append(drawCount).append("\n");
+        sb.append("Ntrack ").append(trackCount).append("\n");
         sb.append("Nzone 0\n");
         sb.append("BoardThickness 630\n");
         sb.append("Nmodule 0\n");
@@ -81,22 +151,44 @@ public class BoardFileGeneratorService {
         sb.append("\n");
     }
 
-    private void addSetupSection(StringBuilder sb) {
+    private void addSheetDescrSection(StringBuilder sb) {
+        String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("d MMM yyyy"));
+        sb.append("$SHEETDESCR\n");
+        sb.append("Sheet A4 11700 8267\n");
+        sb.append("Title \"\"\n");
+        sb.append("Date \"").append(date).append("\"\n");
+        sb.append("Rev \"\"\n");
+        sb.append("Comp \"\"\n");
+        sb.append("Comment1 \"\"\n");
+        sb.append("Comment2 \"\"\n");
+        sb.append("Comment3 \"\"\n");
+        sb.append("Comment4 \"\"\n");
+        sb.append("$EndSHEETDESCR\n");
+        sb.append("\n");
+    }
+
+    private void addSetupSection(StringBuilder sb, BoardParameters params) {
+        int layerCount = Math.max(params.layers(), 2);
+
         sb.append("$SETUP\n");
         sb.append("InternalUnit 0.000100 INCH\n");
-        sb.append("Layers 2\n");
+        sb.append("Layers ").append(layerCount).append("\n");
         sb.append("Layer[0] Back signal\n");
+        if (layerCount > 2) {
+            sb.append("Layer[1] Inner2 signal\n");
+            sb.append("Layer[2] Inner3 signal\n");
+        }
         sb.append("Layer[15] Front signal\n");
-        sb.append("TrackWidth ").append((int)TRACK_WIDTH).append("\n");
-        sb.append("TrackClearence ").append((int)CLEARANCE).append("\n");
+        sb.append("TrackWidth ").append(TRACK_WIDTH).append("\n");
+        sb.append("TrackClearence ").append(CLEARANCE).append("\n");
         sb.append("ZoneClearence 200\n");
-        sb.append("TrackMinWidth 80\n");
+        sb.append("TrackMinWidth 118\n");
         sb.append("DrawSegmWidth 150\n");
         sb.append("EdgeSegmWidth 150\n");
-        sb.append("ViaSize 350\n");
-        sb.append("ViaDrill 250\n");
-        sb.append("ViaMinSize 350\n");
-        sb.append("ViaMinDrill 200\n");
+        sb.append("ViaSize 354\n");
+        sb.append("ViaDrill 197\n");
+        sb.append("ViaMinSize 354\n");
+        sb.append("ViaMinDrill 197\n");
         sb.append("MicroViaSize 200\n");
         sb.append("MicroViaDrill 50\n");
         sb.append("MicroViasAllowed 0\n");
@@ -127,10 +219,10 @@ public class BoardFileGeneratorService {
         sb.append("$NCLASS\n");
         sb.append("Name \"Default\"\n");
         sb.append("Desc \"Это класс цепей по умолчанию.\"\n");
-        sb.append("Clearance ").append((int)CLEARANCE).append("\n");
-        sb.append("TrackWidth ").append((int)TRACK_WIDTH).append("\n");
-        sb.append("ViaDia 350\n");
-        sb.append("ViaDrill 250\n");
+        sb.append("Clearance ").append(CLEARANCE).append("\n");
+        sb.append("TrackWidth ").append(TRACK_WIDTH).append("\n");
+        sb.append("ViaDia 354\n");
+        sb.append("ViaDrill 197\n");
         sb.append("uViaDia 200\n");
         sb.append("uViaDrill 50\n");
         sb.append("AddNet \"\"\n");
@@ -138,49 +230,47 @@ public class BoardFileGeneratorService {
         sb.append("\n");
     }
 
-    private void addTracksSection(StringBuilder sb, List<String> paths, BoardParameters params) {
+    private void addBoardOutline(StringBuilder sb, long x1, long y1, long x2, long y2) {
+        addDrawSegment(sb, x1, y1, x2, y1);
+        addDrawSegment(sb, x2, y1, x2, y2);
+        addDrawSegment(sb, x2, y2, x1, y2);
+        addDrawSegment(sb, x1, y2, x1, y1);
+    }
+
+    private void addDrawSegment(StringBuilder sb, long x1, long y1, long x2, long y2) {
+        sb.append("$DRAWSEGMENT\n");
+        sb.append(String.format("Po 0 %d %d %d %d %d\n", x1, y1, x2, y2, EDGE_WIDTH));
+        sb.append(EDGE_DE).append("\n");
+        sb.append("$EndDRAWSEGMENT\n");
+    }
+
+    private void addTracksSection(StringBuilder sb, List<TrackSegment> segments) {
         sb.append("$TRACK\n");
 
-        int trackIndex = 0;
-        Map<Integer, int[]> coord = graphService.getCoordinate(params);
-
-        for (String pathStr : paths) {
-            if (pathStr == null || pathStr.isEmpty()) continue;
-
-            List<Integer> vertices = parsePath(pathStr);
-            if (vertices.size() < 2) continue;
-
-            // Рисуем сегменты между вершинами
-            for (int i = 0; i < vertices.size() - 1; i++) {
-                int from = vertices.get(i);
-                int to = vertices.get(i + 1);
-
-                // Получаем координаты для вершин
-//                double[] fromCoord = getCoordinates(from, params);
-//                double[] toCoord = getCoordinates(to, params);
-
-
-                int[] fromCoord = coord.get(from);
-                int[] toCoord = coord.get(to);
-
-                // Добавляем трек (дорожку)
-                sb.append("Po ");
-                sb.append(trackIndex++).append(" ");
-                sb.append(formatCoordinate(fromCoord[0]*1000)).append(" ");
-                sb.append(formatCoordinate(fromCoord[1]*1000)).append(" ");
-                sb.append(formatCoordinate(toCoord[0]*1000)).append(" ");
-                sb.append(formatCoordinate(toCoord[1]*1000)).append(" ");
-                sb.append((int)TRACK_WIDTH).append(" ");
-                sb.append("-1\n");
-
-                sb.append("De 0 0 0 0 0\n");
-            }
+        for (TrackSegment segment : segments) {
+            appendTrackSegment(sb, segment.x1(), segment.y1(), segment.x2(), segment.y2());
         }
 
         sb.append("$EndTRACK\n");
         sb.append("\n");
         sb.append("$ZONE\n");
         sb.append("$EndZONE\n");
+    }
+
+    private void appendTrackSegment(StringBuilder sb, long x1, long y1, long x2, long y2) {
+        sb.append(String.format(
+                "Po 0 %d %d %d %d %d -1\n",
+                x1, y1, x2, y2, TRACK_WIDTH
+        ));
+        sb.append(TRACK_DE).append("\n");
+    }
+
+    private long[] requireCoordinates(Map<Integer, long[]> vertexCoordinates, int vertex) {
+        long[] coordinates = vertexCoordinates.get(vertex);
+        if (coordinates == null) {
+            throw new IllegalArgumentException("Unknown vertex number: " + vertex);
+        }
+        return coordinates;
     }
 
     private void addFooter(StringBuilder sb) {
@@ -191,29 +281,11 @@ public class BoardFileGeneratorService {
         return List.of(pathStr.split(","))
                 .stream()
                 .map(String::trim)
+                .filter(s -> !s.isEmpty())
                 .map(Integer::parseInt)
                 .collect(java.util.ArrayList::new, java.util.ArrayList::add, java.util.ArrayList::addAll);
     }
 
-    private double[] getCoordinates(int vertex, BoardParameters params) {
-        // Предполагаем, что вершины расположены на сетке
-        // Вычисляем координаты на основе номера вершины и шага сетки
-        int cols = (int)(params.width() / params.gridPitch());
-        int row = vertex / cols;
-        int col = vertex % cols;
-
-        // Координаты в мм
-        double x = col * params.gridPitch();
-        double y = row * params.gridPitch();
-
-        // Конвертируем в internal units
-        double xUnits = x / INCH_TO_MM / INTERNAL_UNIT ; // смещение как в исходном файле
-        double yUnits = y / INCH_TO_MM / INTERNAL_UNIT; // смещение как в исходном файле
-
-        return new double[]{xUnits, yUnits};
-    }
-
-    private String formatCoordinate(double coord) {
-        return String.format("%.0f", coord);
+    private record TrackSegment(long x1, long y1, long x2, long y2) {
     }
 }
