@@ -22,8 +22,8 @@ public class PathsController {
     private final PathsArrayService pathsArrayService;
 
     @PostMapping("/{id}")
-    public void calculateAllPathsArray(@PathVariable(name = "id") Long id,
-                                       @RequestParam(name = "size", required = false) Integer size) {
+    public void calculateAllPaths(@PathVariable(name = "id") Long id,
+                                  @RequestParam(name = "size", required = false) Integer size) {
         pathsArrayService.savePaths(id, size);
     }
 
