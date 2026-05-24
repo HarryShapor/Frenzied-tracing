@@ -127,17 +127,35 @@ public class SimplePathsFinderService {
         List<Integer> currentPath = new ArrayList<>();
         Set<int[]> edges = new HashSet<>();
 
+//        Double width = 0d;
+//        for (int i = 0; i < segment.size(); i++){
+//            width++;
+//            try {
+//                if (segment.get(i+1) - segment.get(i) != 1){
+//                    break;
+//                }
+//            }
+//            catch (IndexOutOfBoundsException e){
+//                width = (double) segment.size() / 2;
+//            }
+//        }
+//
+//        Double height = segment.size() / width;
+
         Double width = 0d;
-        for (int i = 0; i < segment.size(); i++){
+        boolean hasBreak = false;
+
+        for (int i = 0; i < segment.size() - 1; i++) {
             width++;
-            try {
-                if (segment.get(i+1) - segment.get(i) != 1){
-                    break;
-                }
+            if (segment.get(i + 1) - segment.get(i) != 1) {
+                hasBreak = true;
+                break;
             }
-            catch (IndexOutOfBoundsException e){
-                width = (double) segment.size() / 2;
-            }
+        }
+
+        if (!hasBreak) {
+            // Все элементы последовательные — это одна строка или квадрат
+            width = Math.sqrt(segment.size());
         }
 
         Double height = segment.size() / width;

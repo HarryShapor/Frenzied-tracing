@@ -33,9 +33,6 @@ public class SegmentService {
      */
     public void split(Board board, Integer sizeSegment){
 
-        if (board.getN() < 25 ){
-            return;
-        }
         Integer layers = board.getLayers();
         Boolean diagonals = board.getDiagonals();
 
@@ -50,11 +47,7 @@ public class SegmentService {
             segmentsGraph.setLevel(level);
             List<List<Integer>> segments = segmentsGraph.getSegments();
             List<PathsArrayDto> dtos;
-            int g = 1;
-            if (n > 9000){
-                g = 493;
-            }
-            for (int i = g; i <= segments.size(); i++) {
+            for (int i = 1; i <= segments.size(); i++) {
                 dtos = null;
                 dtos = allWays(columns, segments.get((i-1)), i, sizeSegment,
                         level);

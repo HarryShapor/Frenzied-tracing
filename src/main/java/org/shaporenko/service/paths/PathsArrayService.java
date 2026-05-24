@@ -79,12 +79,7 @@ public class PathsArrayService {
 //
 //            calculateAllPaths(dtos, 5);
 //        }
-        if (board.getN() > 25){
             segmentService.split(board, sizeSegment);
-        }
-        else {
-            //обычный расчёт
-        }
 
     }
 
